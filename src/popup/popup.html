@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AlphaFonts Font Inspector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup">
+    <header class="header">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect x="0.5" y="0.5" width="31" height="31" rx="7" fill="#0d1117" stroke="#30363d"/>
+          <path d="M8 24 L16 7.5 L24 24 M11.2 18.8 H20.8" fill="none" stroke="#3dd6b0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 28 H26" fill="none" stroke="#8b949e" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-name">AlphaFonts</span>
+          <span class="brand-sub">Font Inspector</span>
+        </div>
+      </div>
+      <span class="status" id="status" data-state="ready" role="status">
+        <span class="status-dot"></span>
+        <span id="status-text">Ready</span>
+      </span>
+    </header>
+
+    <section class="main">
+      <button type="button" class="cta" id="toggle">Start Inspecting</button>
+      <p class="helper" id="helper">Hover over any text on the page to inspect its typography.</p>
+      <p class="error" id="error" role="alert" hidden></p>
+    </section>
+
+    <section class="card shortcut">
+      <div>
+        <h2 class="card-title">Shortcut</h2>
+        <p class="card-note" id="shortcut-note">Toggle on any page.</p>
+      </div>
+      <div class="keys" id="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>F</kbd></div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">How it works</h2>
+      <ol class="steps">
+        <li><span class="step-num">1</span>Start Inspector</li>
+        <li><span class="step-num">2</span>Hover over text</li>
+        <li><span class="step-num">3</span>Click to lock</li>
+        <li><span class="step-num">4</span>Copy CSS</li>
+      </ol>
+    </section>
+
+    <footer class="footer">
+      <span>Powered by AlphaFonts</span>
+      <a class="footer-link" href="https://alphafonts.com" target="_blank" rel="noopener noreferrer">Visit AlphaFonts <span aria-hidden="true">&rarr;</span></a>
+    </footer>
+  </main>
+
+  <script src="../shared/constants.js"></script>
+  <script src="../shared/utils.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

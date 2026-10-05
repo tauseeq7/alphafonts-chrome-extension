@@ -1,0 +1,467 @@
+/*
+ * Styles for the in-page inspector (highlight box, floating panel, toast).
+ * They are loaded INSIDE a Shadow DOM, so the website's CSS cannot change how
+ * the panel looks and these rules cannot change the website.
+ */
+:host {
+  all: initial;
+}
+
+:host,
+.af-highlight,
+.af-panel,
+.af-panel *,
+.af-toast {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.af-highlight {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 3px;
+  background: rgba(61, 214, 176, 0.14);
+  /* Accent outline plus a thin dark ring so it stays visible on light and dark pages. */
+  box-shadow: 0 0 0 2px #3dd6b0, 0 0 0 3px rgba(13, 17, 23, 0.85);
+}
+
+.af-highlight[data-locked='true'] {
+  background: rgba(61, 214, 176, 0.08);
+  box-shadow: 0 0 0 2px #3dd6b0, 0 0 0 3px rgba(13, 17, 23, 0.85), 0 0 0 6px rgba(61, 214, 176, 0.25);
+}
+
+/* ---------- Panel ---------- */
+
+.af-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: none; /* never blocks the page while hovering */
+  color: #f0f6fc;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(1, 4, 9, 0.55), 0 2px 6px rgba(1, 4, 9, 0.4);
+  font: 400 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.af-panel[data-locked='true'] {
+  pointer-events: auto; /* buttons only work once an element is locked */
+}
+
+.af-panel:focus {
+  outline: none;
+}
+
+.af-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.af-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.af-logo {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.af-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.af-brand-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.af-brand-sub {
+  font-size: 10px;
+  color: #8b949e;
+  letter-spacing: 0.04em;
+}
+
+.af-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid #30363d;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f0f6fc;
+  background: #0d1117;
+  white-space: nowrap;
+}
+
+.af-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8b949e;
+}
+
+.af-panel[data-locked='true'] .af-dot {
+  background: #3dd6b0;
+}
+
+.af-section {
+  padding: 10px 12px 0;
+}
+
+.af-label,
+.af-details summary,
+.af-stat dt {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b949e;
+}
+
+.af-family {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #f0f6fc;
+  overflow-wrap: anywhere;
+}
+
+.af-rendered {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.af-rendered strong {
+  font-weight: 600;
+  color: #f0f6fc;
+}
+
+.af-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.af-stat {
+  min-width: 0;
+}
+
+.af-stat dt {
+  margin-bottom: 1px;
+  white-space: nowrap;
+}
+
+.af-stat dd,
+.af-row dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #f0f6fc;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Color ---------- */
+
+.af-color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.af-color-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 8px 4px 4px;
+  color: #f0f6fc;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.af-color-btn:hover {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+.af-swatch {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #8b949e;
+  border-radius: 50%;
+}
+
+.af-color-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.af-segmented {
+  flex: none;
+  display: inline-flex;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.af-segmented button {
+  padding: 3px 8px;
+  color: #8b949e;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.af-segmented button + button {
+  border-left: 1px solid #30363d;
+}
+
+.af-segmented button[aria-pressed='true'] {
+  color: #0d1117;
+  background: #3dd6b0;
+}
+
+.af-segmented button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- Preview ---------- */
+
+.af-preview {
+  padding: 8px 10px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Expandable sections ---------- */
+
+.af-details {
+  margin: 10px 12px 0;
+  border-top: 1px solid #30363d;
+}
+
+.af-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.af-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.af-details summary::after {
+  content: '+';
+  font-size: 13px;
+  color: #8b949e;
+}
+
+.af-details[open] summary::after {
+  content: '\2212';
+}
+
+.af-summary-hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: #f0f6fc;
+}
+
+.af-rows {
+  margin: 0;
+  padding: 0 0 8px;
+}
+
+.af-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.af-row dt {
+  flex: none;
+  color: #8b949e;
+}
+
+.af-row dd {
+  text-align: right;
+}
+
+/* ---------- Actions and footer ---------- */
+
+.af-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 10px 12px 0;
+}
+
+.af-btn {
+  padding: 7px 8px;
+  color: #f0f6fc;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.af-btn:hover {
+  background: #1f2630;
+  border-color: #8b949e;
+}
+
+.af-btn-primary {
+  color: #0d1117;
+  background: #3dd6b0;
+  border-color: #3dd6b0;
+}
+
+.af-btn-primary:hover {
+  background: #5ee6c4;
+  border-color: #5ee6c4;
+}
+
+.af-link {
+  grid-column: 1 / -1;
+  padding-top: 2px;
+  font-size: 11px;
+  color: #3dd6b0;
+  text-align: center;
+  text-decoration: none;
+}
+
+.af-link:hover {
+  text-decoration: underline;
+}
+
+.af-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.af-stop {
+  padding: 2px 4px;
+  color: #8b949e;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.af-stop:hover {
+  color: #f0f6fc;
+}
+
+.af-kbd {
+  padding: 1px 5px;
+  color: #f0f6fc;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+}
+
+/* ---------- Keyboard focus ---------- */
+
+.af-panel button:focus-visible,
+.af-panel summary:focus-visible,
+.af-panel a:focus-visible {
+  outline: 2px solid #3dd6b0;
+  outline-offset: 2px;
+}
+
+/* ---------- Toast ---------- */
+
+.af-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 8px 14px;
+  pointer-events: none;
+  color: #f0f6fc;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(1, 4, 9, 0.5);
+  font: 600 12px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+}
+
+.af-toast[data-kind='error'] {
+  border-color: #f85149;
+}

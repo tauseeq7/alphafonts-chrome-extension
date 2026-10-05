@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "AlphaFonts Font Inspector",
+  "short_name": "AlphaFonts",
+  "version": "1.0.0",
+  "description": "Inspect fonts, typography, and CSS styles on any webpage.",
+  "homepage_url": "https://alphafonts.com",
+  "icons": {
+    "16": "src/icons/icon16.png",
+    "32": "src/icons/icon32.png",
+    "48": "src/icons/icon48.png",
+    "128": "src/icons/icon128.png"
+  },
+  "action": {
+    "default_title": "AlphaFonts Font Inspector",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "src/icons/icon16.png",
+      "32": "src/icons/icon32.png",
+      "48": "src/icons/icon48.png",
+      "128": "src/icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  "permissions": ["activeTab", "scripting", "contextMenus"],
+  "commands": {
+    "toggle-inspector": {
+      "suggested_key": {
+        "default": "Alt+Shift+F"
+      },
+      "description": "Toggle the AlphaFonts Font Inspector"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
