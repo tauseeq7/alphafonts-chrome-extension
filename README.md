@@ -2,7 +2,7 @@
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 1.0.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.0.0 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
@@ -19,7 +19,8 @@ Made by [AlphaFonts](https://alphafonts.com). Version 1.0.0 for Google Chrome (M
 - **Click-to-lock** - freeze the panel so you can move the mouse and press buttons.
 - **Keyboard shortcut** - `Alt + Shift + F` toggles the inspector.
 - **Right-click inspection** - right-click a page, then choose **AlphaFonts > Inspect Font**.
-- **Live preview** - "The quick brown fox" rendered with the detected typography.
+- **Live preview** - a short sample of the text you picked, drawn with its detected typography.
+- **Light and dark mode** - use the sun/moon button in the popup, or in the panel once it is locked. Your choice is remembered.
 
 No account, no server, no API keys, no build step.
 
@@ -63,7 +64,7 @@ You can change the shortcut at `chrome://extensions/shortcuts`. The popup always
 | Likely rendered | A best guess of which font in that list is actually available and used. It is shown only when the browser's checks agree, and it is a hint, not a guarantee. |
 | Size, Weight, Style, Line height, Spacing | Computed values for the element. |
 | Color | HEX or RGB. Semi-transparent colors always show as `rgba(...)`. |
-| Preview | Sample text drawn with the detected typography (size capped so the panel stays small). |
+| Preview | The first ~60 characters of the element's own text, drawn with its detected typography (size capped so the panel stays small). Password fields are never read. Falls back to "The quick brown fox" if the element has no text. |
 | More typography | Alignment, transform, decoration, word spacing, and other details. |
 | Element | Tag, class, ID, and a generated selector. |
 
@@ -85,6 +86,7 @@ AlphaFonts Font Inspector does all its work locally in your browser.
 - It does **not** collect browsing history, page content, or personal information.
 - It does **not** send anything to a server. It has no analytics, no tracking, no ads, and loads no remote code.
 - The page is only read after **you** start the inspector, and only the style of the element you point at is read.
+- The preview text is shown only inside the panel on your screen. It is never saved or sent anywhere.
 - Copied text goes only to your clipboard.
 - It works offline after installation.
 - The only network action is opening <https://alphafonts.com> in a new tab when you click the link yourself.
@@ -96,6 +98,12 @@ Permissions used, and why:
 | `activeTab` | Lets the extension work on the tab you just clicked, used, or right-clicked, only for that moment. No "read all websites" access is requested. |
 | `scripting` | Injects the inspector into that tab when you start it. |
 | `contextMenus` | Adds the **AlphaFonts > Inspect Font** right-click item. |
+| `storage` | Remembers your light/dark choice on your own computer. Nothing else is stored. |
+
+## What's new in 2.0
+
+- The panel preview now shows the text you selected instead of a fixed sentence.
+- Light mode with a sun/moon switch (popup and locked panel), remembered between visits.
 
 ## Development
 

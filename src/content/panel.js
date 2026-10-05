@@ -56,6 +56,23 @@
     return logo;
   }
 
+  /** Sun (shown in dark mode: "switch to light") or moon (shown in light mode). */
+  function createThemeIcon(theme) {
+    const icon = svg('svg', {
+      viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false'
+    });
+    if (theme === 'dark') {
+      icon.append(
+        svg('circle', { cx: 12, cy: 12, r: 4 }),
+        svg('path', { d: 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41' })
+      );
+    } else {
+      icon.append(svg('path', { d: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z' }));
+    }
+    return icon;
+  }
+
   function show(node, visible) {
     node.hidden = !visible;
   }
@@ -76,7 +93,7 @@
 
   /**
    * handlers: { onCopyCSS, onCopyInfo, onCopySelector, onCopyColor,
-   *             onColorFormat(format), onUnlock, onStop, onLayoutChange }
+   *             onColorFormat(format), onThemeToggle, onUnlock, onStop, onLayoutChange }
    */
   function createPanel(handlers) {
     // Remove leftovers from an older copy of the extension (e.g. after an update).
@@ -101,6 +118,8 @@
     // ----- Build the DOM -----
 
     ui.highlight = h('div', { class: 'af-highlight', hidden: true });
+
+    ui.themeBtn = h('button', { type: 'button', class: 'af-theme', hidden: true });
 
     ui.statusDot = h('span', { class: 'af-dot' });
     ui.statusText = h('span', {}, 'Inspecting');
@@ -156,7 +175,7 @@
           createLogo(),
           h('div', { class: 'af-brand-text' }, [h('span', { class: 'af-brand-name' }, 'AlphaFonts'), h('span', { class: 'af-brand-sub' }, 'Font Inspector')])
         ]),
-        ui.status
+        h('div', { class: 'af-head-actions' }, [ui.themeBtn, ui.status])
       ]),
       h('div', { class: 'af-section' }, [h('h2', { class: 'af-label' }, 'Font family stack'), ui.family, ui.rendered]),
       h('div', { class: 'af-section' }, [h('h2', { class: 'af-label' }, 'Typography'), statsList]),
@@ -181,6 +200,7 @@
     press(ui.copySelector, () => handlers.onCopySelector());
     press(ui.colorBtn, () => handlers.onCopyColor(ui.colorValue.textContent));
     press(ui.unlock, () => handlers.onUnlock());
+    press(ui.themeBtn, () => handlers.onThemeToggle());
     press(ui.stop, () => handlers.onStop());
     for (const button of [ui.hexBtn, ui.rgbBtn]) {
       button.addEventListener('click', () => {
@@ -292,6 +312,7 @@
       const { data, element } = model;
       colorFormat = model.colorFormat || colorFormat;
       ui.family.textContent = orUnavailable(data.fontFamily);
+      ui.preview.textContent = data.previewText || PREVIEW_TEXT;
       ui.renderedName.textContent = data.renderedFont || '';
       show(ui.rendered, !!data.renderedFont);
       for (const key of Object.keys(ui.stats)) ui.stats[key].textContent = orUnavailable(data[key]);
@@ -306,6 +327,7 @@
       ui.highlight.setAttribute('data-locked', String(locked));
       ui.statusText.textContent = locked ? 'Locked' : 'Inspecting';
       show(ui.actions, locked);
+      show(ui.themeBtn, locked); // the panel only takes clicks while locked
       show(ui.stop, locked);
       ui.hint.replaceChildren();
       if (locked) {
@@ -313,6 +335,16 @@
       } else {
         ui.hint.append('Click to lock · ', h('span', { class: 'af-kbd' }, 'ESC'), ' to exit');
       }
+    }
+
+    /** theme: 'dark' | 'light' */
+    function setTheme(theme) {
+      const light = theme === 'light';
+      host.setAttribute('data-theme', light ? 'light' : 'dark');
+      const label = light ? 'Switch to dark mode' : 'Switch to light mode';
+      ui.themeBtn.setAttribute('aria-label', label);
+      ui.themeBtn.title = label;
+      ui.themeBtn.replaceChildren(createThemeIcon(light ? 'light' : 'dark'));
     }
 
     // ----- Positioning -----
@@ -439,6 +471,7 @@
       },
       render,
       setLocked,
+      setTheme,
       setHighlight,
       place,
       showPanel(visible) {

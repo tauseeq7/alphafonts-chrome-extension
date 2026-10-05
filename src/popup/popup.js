@@ -15,8 +15,63 @@
   const shortcutKeys = document.getElementById('shortcut-keys');
   const shortcutNote = document.getElementById('shortcut-note');
 
+  const themeToggle = document.getElementById('theme-toggle');
+  const THEME_KEY = 'theme';
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
   let currentTab = null;
   let inspecting = false;
+
+  // ----- Theme (light / dark), saved so the in-page panel matches -----
+
+  function themeIcon(theme) {
+    const icon = document.createElementNS(SVG_NS, 'svg');
+    for (const [k, v] of Object.entries({
+      viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false'
+    })) icon.setAttribute(k, v);
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(SVG_NS, tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      icon.append(el);
+    };
+    if (theme === 'dark') {
+      // Dark now: show a sun, because the button switches to light.
+      add('circle', { cx: 12, cy: 12, r: 4 });
+      add('path', { d: 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41' });
+    } else {
+      add('path', { d: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z' });
+    }
+    return icon;
+  }
+
+  function applyTheme(theme) {
+    const light = theme === 'light';
+    document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+    const label = light ? 'Switch to dark mode' : 'Switch to light mode';
+    themeToggle.setAttribute('aria-label', label);
+    themeToggle.title = label;
+    themeToggle.replaceChildren(themeIcon(light ? 'light' : 'dark'));
+  }
+
+  async function initTheme() {
+    let theme = 'dark';
+    try {
+      theme = (await chrome.storage.local.get(THEME_KEY))[THEME_KEY] === 'light' ? 'light' : 'dark';
+    } catch (e) {
+      // Default to dark.
+    }
+    applyTheme(theme);
+    themeToggle.addEventListener('click', () => {
+      theme = theme === 'light' ? 'dark' : 'light';
+      applyTheme(theme);
+      try {
+        chrome.storage.local.set({ [THEME_KEY]: theme });
+      } catch (e) {
+        // Still applied for this popup.
+      }
+    });
+  }
 
   // ----- Rendering -----
 
@@ -122,6 +177,7 @@
   }
 
   async function init() {
+    initTheme();
     renderShortcut();
     toggleButton.addEventListener('click', onToggleClick);
 

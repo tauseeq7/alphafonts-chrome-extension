@@ -5,6 +5,28 @@
  */
 :host {
   all: initial;
+  --af-bg: #0d1117;
+  --af-bg2: #161b22;
+  --af-border: #30363d;
+  --af-text: #f0f6fc;
+  --af-muted: #8b949e;
+  --af-hover: #1f2630;
+  --af-accent: #3dd6b0;
+  --af-accent-hover: #5ee6c4;
+  --af-accent-text: #3dd6b0;
+  --af-on-accent: #0d1117;
+  --af-shadow: rgba(1, 4, 9, 0.55);
+}
+
+:host([data-theme='light']) {
+  --af-bg: #ffffff;
+  --af-bg2: #f6f8fa;
+  --af-border: #d0d7de;
+  --af-text: #1f2328;
+  --af-muted: #59636e;
+  --af-hover: #eaeef2;
+  --af-accent-text: #0b7a5e;
+  --af-shadow: rgba(31, 35, 40, 0.25);
 }
 
 :host,
@@ -46,11 +68,11 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   pointer-events: none; /* never blocks the page while hovering */
-  color: #f0f6fc;
-  background: #0d1117;
-  border: 1px solid #30363d;
+  color: var(--af-text);
+  background: var(--af-bg);
+  border: 1px solid var(--af-border);
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(1, 4, 9, 0.55), 0 2px 6px rgba(1, 4, 9, 0.4);
+  box-shadow: 0 12px 32px var(--af-shadow), 0 2px 6px var(--af-shadow);
   font: 400 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
   letter-spacing: normal;
   text-align: left;
@@ -72,8 +94,8 @@
   justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
-  background: #161b22;
-  border-bottom: 1px solid #30363d;
+  background: var(--af-bg2);
+  border-bottom: 1px solid var(--af-border);
 }
 
 .af-brand {
@@ -98,12 +120,12 @@
 .af-brand-name {
   font-size: 13px;
   font-weight: 700;
-  color: #f0f6fc;
+  color: var(--af-text);
 }
 
 .af-brand-sub {
   font-size: 10px;
-  color: #8b949e;
+  color: var(--af-muted);
   letter-spacing: 0.04em;
 }
 
@@ -112,12 +134,12 @@
   align-items: center;
   gap: 6px;
   padding: 3px 8px;
-  border: 1px solid #30363d;
+  border: 1px solid var(--af-border);
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-  color: #f0f6fc;
-  background: #0d1117;
+  color: var(--af-text);
+  background: var(--af-bg);
   white-space: nowrap;
 }
 
@@ -125,11 +147,11 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #8b949e;
+  background: var(--af-muted);
 }
 
 .af-panel[data-locked='true'] .af-dot {
-  background: #3dd6b0;
+  background: var(--af-accent);
 }
 
 .af-section {
@@ -144,7 +166,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8b949e;
+  color: var(--af-muted);
 }
 
 .af-family {
@@ -152,19 +174,19 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.35;
-  color: #f0f6fc;
+  color: var(--af-text);
   overflow-wrap: anywhere;
 }
 
 .af-rendered {
   margin: 3px 0 0;
   font-size: 11px;
-  color: #8b949e;
+  color: var(--af-muted);
 }
 
 .af-rendered strong {
   font-weight: 600;
-  color: #f0f6fc;
+  color: var(--af-text);
 }
 
 .af-stats {
@@ -188,8 +210,36 @@
   margin: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
-  color: #f0f6fc;
+  color: var(--af-text);
   overflow-wrap: anywhere;
+}
+
+.af-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.af-theme {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--af-text);
+  background: var(--af-bg);
+  border: 1px solid var(--af-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.af-theme:hover {
+  background: var(--af-hover);
+}
+
+.af-theme svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* ---------- Color ---------- */
@@ -207,7 +257,7 @@
   gap: 8px;
   min-width: 0;
   padding: 4px 8px 4px 4px;
-  color: #f0f6fc;
+  color: var(--af-text);
   background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -216,15 +266,15 @@
 }
 
 .af-color-btn:hover {
-  background: #161b22;
-  border-color: #30363d;
+  background: var(--af-bg2);
+  border-color: var(--af-border);
 }
 
 .af-swatch {
   flex: none;
   width: 18px;
   height: 18px;
-  border: 1px solid #8b949e;
+  border: 1px solid var(--af-muted);
   border-radius: 50%;
 }
 
@@ -238,14 +288,14 @@
 .af-segmented {
   flex: none;
   display: inline-flex;
-  border: 1px solid #30363d;
+  border: 1px solid var(--af-border);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .af-segmented button {
   padding: 3px 8px;
-  color: #8b949e;
+  color: var(--af-muted);
   background: transparent;
   border: 0;
   font-family: inherit;
@@ -257,12 +307,12 @@
 }
 
 .af-segmented button + button {
-  border-left: 1px solid #30363d;
+  border-left: 1px solid var(--af-border);
 }
 
 .af-segmented button[aria-pressed='true'] {
-  color: #0d1117;
-  background: #3dd6b0;
+  color: var(--af-on-accent);
+  background: var(--af-accent);
 }
 
 .af-segmented button:disabled {
@@ -274,18 +324,20 @@
 
 .af-preview {
   padding: 8px 10px;
-  border: 1px solid #30363d;
+  border: 1px solid var(--af-border);
   border-radius: 8px;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* ---------- Expandable sections ---------- */
 
 .af-details {
   margin: 10px 12px 0;
-  border-top: 1px solid #30363d;
+  border-top: 1px solid var(--af-border);
 }
 
 .af-details summary {
@@ -306,7 +358,7 @@
 .af-details summary::after {
   content: '+';
   font-size: 13px;
-  color: #8b949e;
+  color: var(--af-muted);
 }
 
 .af-details[open] summary::after {
@@ -325,7 +377,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
   font-weight: 400;
-  color: #f0f6fc;
+  color: var(--af-text);
 }
 
 .af-rows {
@@ -342,7 +394,7 @@
 
 .af-row dt {
   flex: none;
-  color: #8b949e;
+  color: var(--af-muted);
 }
 
 .af-row dd {
@@ -360,9 +412,9 @@
 
 .af-btn {
   padding: 7px 8px;
-  color: #f0f6fc;
-  background: #161b22;
-  border: 1px solid #30363d;
+  color: var(--af-text);
+  background: var(--af-bg2);
+  border: 1px solid var(--af-border);
   border-radius: 8px;
   font-family: inherit;
   font-size: 12px;
@@ -372,26 +424,26 @@
 }
 
 .af-btn:hover {
-  background: #1f2630;
-  border-color: #8b949e;
+  background: var(--af-hover);
+  border-color: var(--af-muted);
 }
 
 .af-btn-primary {
-  color: #0d1117;
-  background: #3dd6b0;
-  border-color: #3dd6b0;
+  color: var(--af-on-accent);
+  background: var(--af-accent);
+  border-color: var(--af-accent);
 }
 
 .af-btn-primary:hover {
-  background: #5ee6c4;
-  border-color: #5ee6c4;
+  background: var(--af-accent-hover);
+  border-color: var(--af-accent-hover);
 }
 
 .af-link {
   grid-column: 1 / -1;
   padding-top: 2px;
   font-size: 11px;
-  color: #3dd6b0;
+  color: var(--af-accent-text);
   text-align: center;
   text-decoration: none;
 }
@@ -407,12 +459,12 @@
   gap: 8px;
   padding: 10px 12px;
   font-size: 11px;
-  color: #8b949e;
+  color: var(--af-muted);
 }
 
 .af-stop {
   padding: 2px 4px;
-  color: #8b949e;
+  color: var(--af-muted);
   background: transparent;
   border: 0;
   border-radius: 4px;
@@ -422,14 +474,14 @@
 }
 
 .af-stop:hover {
-  color: #f0f6fc;
+  color: var(--af-text);
 }
 
 .af-kbd {
   padding: 1px 5px;
-  color: #f0f6fc;
-  background: #161b22;
-  border: 1px solid #30363d;
+  color: var(--af-text);
+  background: var(--af-bg2);
+  border: 1px solid var(--af-border);
   border-radius: 4px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 10px;
@@ -440,7 +492,7 @@
 .af-panel button:focus-visible,
 .af-panel summary:focus-visible,
 .af-panel a:focus-visible {
-  outline: 2px solid #3dd6b0;
+  outline: 2px solid var(--af-accent-text);
   outline-offset: 2px;
 }
 
@@ -454,9 +506,9 @@
   max-width: calc(100vw - 32px);
   padding: 8px 14px;
   pointer-events: none;
-  color: #f0f6fc;
-  background: #161b22;
-  border: 1px solid #30363d;
+  color: var(--af-text);
+  background: var(--af-bg2);
+  border: 1px solid var(--af-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(1, 4, 9, 0.5);
   font: 600 12px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;

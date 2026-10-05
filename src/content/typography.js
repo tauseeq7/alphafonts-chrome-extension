@@ -63,7 +63,33 @@
       data[key] = style ? readProperty(style, PROPERTIES[key]) : null;
     }
     data.renderedFont = detectRenderedFont(data.fontFamily);
+    data.previewText = getPreviewText(element);
     return data;
+  }
+
+  const PREVIEW_MAX_LENGTH = 60;
+
+  /**
+   * A short sample of the element's own text for the panel preview.
+   * Only the element's direct text is used (not its children), it is cut short,
+   * and password fields are never read.
+   */
+  function getPreviewText(element) {
+    try {
+      let raw = '';
+      if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+        if (element.type === 'password') return '';
+        raw = element.value || element.placeholder || '';
+      } else {
+        for (const node of element.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE) raw += node.nodeValue + ' ';
+        }
+      }
+      const text = raw.replace(/\s+/g, ' ').trim();
+      return text.length > PREVIEW_MAX_LENGTH ? text.slice(0, PREVIEW_MAX_LENGTH - 1).trimEnd() + '\u2026' : text;
+    } catch (e) {
+      return '';
+    }
   }
 
   // ---------------------------------------------------------------------

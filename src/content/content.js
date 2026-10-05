@@ -14,6 +14,7 @@
   const { MESSAGES, ERRORS } = AF.constants;
   const typography = AF.typography;
 
+  const THEME_KEY = 'theme';
   const CURSOR_STYLE_ID = 'alphafonts-inspector-cursor';
   // Mouse events we swallow while inspecting, so clicks never reach the page's own handlers.
   const BLOCKED_EVENTS = ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'dblclick', 'auxclick'];
@@ -28,6 +29,7 @@
     data: null,
     info: null,
     colorFormat: 'hex',
+    theme: 'dark',
     cursor: { x: 0, y: 0 },
     pendingTarget: null,
     needsHitTest: false, // re-find the element under the cursor (after scroll)
@@ -62,6 +64,36 @@
   }
 
   // ---------------------------------------------------------------------
+  // Theme (light / dark), remembered between pages and shared with the popup
+  // ---------------------------------------------------------------------
+
+  async function loadTheme() {
+    try {
+      const stored = await chrome.storage.local.get(THEME_KEY);
+      state.theme = stored[THEME_KEY] === 'light' ? 'light' : 'dark';
+    } catch (e) {
+      state.theme = 'dark';
+    }
+  }
+
+  function toggleTheme() {
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    state.panel.setTheme(state.theme);
+    try {
+      chrome.storage.local.set({ [THEME_KEY]: state.theme });
+    } catch (e) {
+      // Not remembered, but it still works for this page.
+    }
+  }
+
+  /** The popup can change the theme while the inspector is open. */
+  function handleStorageChange(changes, area) {
+    if (area !== 'local' || !changes[THEME_KEY] || !state.panel) return;
+    state.theme = changes[THEME_KEY].newValue === 'light' ? 'light' : 'dark';
+    state.panel.setTheme(state.theme);
+  }
+
+  // ---------------------------------------------------------------------
   // Start / stop
   // ---------------------------------------------------------------------
 
@@ -70,21 +102,25 @@
     if (!state.starting) {
       state.starting = (async () => {
         const css = await loadPanelStyles();
+        await loadTheme();
         const panel = AF.createPanel({
           onCopyCSS: copyCSS,
           onCopyInfo: copyFontInfo,
           onCopySelector: copySelector,
           onCopyColor: copyColor,
           onColorFormat: setColorFormat,
+          onThemeToggle: toggleTheme,
           onUnlock: unlock,
           onStop: stopInspector,
           onLayoutChange: updateLayout
         });
         panel.mount(css);
+        panel.setTheme(state.theme);
         panel.setLocked(false);
         state.panel = panel;
         state.active = true;
         addListeners();
+        chrome.storage.onChanged.addListener(handleStorageChange);
         setCursorStyle(true);
         notify(MESSAGES.INSPECTOR_STARTED);
       })();
@@ -99,6 +135,7 @@
   function stopInspector() {
     if (!state.active) return;
     removeListeners();
+    chrome.storage.onChanged.removeListener(handleStorageChange);
     setCursorStyle(false);
     if (state.frame) cancelAnimationFrame(state.frame);
     stopWatching();
