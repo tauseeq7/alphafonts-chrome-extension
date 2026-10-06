@@ -82,3 +82,41 @@ test('buildCSS and buildInfo only include meaningful values', () => {
   const alphaInfo = typography.buildInfo({ ...data, color: 'rgba(34, 34, 34, 0.8)' });
   assert.ok(alphaInfo.includes('Color: rgba(34, 34, 34, 0.8)\n'));
 });
+
+test('buildCSS and buildInfo respect the chosen properties', () => {
+  const { typography } = load('src/shared/constants.js', 'src/shared/utils.js', 'src/content/typography.js');
+  const data = {
+    fontFamily: 'Inter, sans-serif', fontSize: '18px', fontWeight: '600', fontStyle: 'normal', fontVariant: 'normal',
+    fontStretch: '100%', lineHeight: '28px', letterSpacing: '0.2px', wordSpacing: '0px', textAlign: 'left',
+    textTransform: 'none', textDecorationLine: 'none', textDecorationStyle: 'solid', textDecorationThickness: 'auto',
+    color: 'rgb(0, 0, 0)', opacity: '1'
+  };
+  const only = (...keys) => Object.fromEntries(
+    ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontColor', 'lineHeight', 'letterSpacing', 'wordSpacing', 'textAlign', 'textTransform', 'textDecoration']
+      .map((key) => [key, keys.includes(key)])
+  );
+  const css = typography.buildCSS(data, only('fontSize', 'fontColor'));
+  assert.strictEqual(css, 'font-size: 18px;\ncolor: rgb(0, 0, 0);');
+  const info = typography.buildInfo(data, null, only('fontSize'));
+  assert.ok(info.includes('Font Size: 18px') && !info.includes('Color:') && !info.includes('Font Family'));
+  assert.strictEqual(typography.wrapRule('font-size: 18px;', '.hero'), '.hero {\n  font-size: 18px;\n}');
+  assert.strictEqual(typography.wrapRule('', '.hero'), '');
+});
+
+test('settings are always complete and valid, and old theme-only data still works', () => {
+  const { settings } = load('src/shared/constants.js', 'src/shared/settings.js');
+  const fresh = settings.normalize(undefined);
+  assert.strictEqual(fresh.theme, 'dark');
+  assert.strictEqual(fresh.colorFormat, 'hex');
+  assert.strictEqual(fresh.showAllOnHover, true);
+  assert.strictEqual(Object.keys(fresh.properties).length, settings.PROPERTIES.length);
+  assert.ok(Object.values(fresh.properties).every((v) => v === true));
+  assert.strictEqual(settings.normalize(undefined, 'light').theme, 'light'); // version 2.0 data
+  const custom = settings.normalize({ theme: 'nope', colorFormat: 'rgb', showAllOnHover: false, properties: { fontSize: false, bogus: false } });
+  assert.strictEqual(custom.theme, 'dark');
+  assert.strictEqual(custom.colorFormat, 'rgb');
+  assert.strictEqual(custom.showAllOnHover, false);
+  assert.strictEqual(custom.properties.fontSize, false);
+  assert.strictEqual(custom.properties.fontFamily, true);
+  assert.strictEqual('bogus' in custom.properties, false);
+});

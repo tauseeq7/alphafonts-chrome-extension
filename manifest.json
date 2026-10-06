@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AlphaFonts Font Inspector",
   "short_name": "AlphaFonts",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Inspect fonts, typography, and CSS styles on any webpage.",
   "homepage_url": "https://alphafonts.com",
   "icons": {
@@ -23,6 +23,10 @@
   },
   "background": {
     "service_worker": "src/background/background.js"
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
   },
   "permissions": ["activeTab", "scripting", "contextMenus", "storage"],
   "commands": {

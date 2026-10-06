@@ -151,33 +151,51 @@
     return value === 'normal' || value === '100%';
   }
 
-  /** Builds the CSS block for "Copy CSS". Only properties with real values are included. */
-  function buildCSS(data) {
+  function isDefaultSpacing(value) {
+    return value === 'normal' || value === '0px';
+  }
+
+  /** `enabled` is the settings.properties map. Without it, everything is included. */
+  function isEnabled(enabled, key) {
+    return !enabled || enabled[key] !== false;
+  }
+
+  /** Builds the CSS block for "Copy CSS". Only enabled properties with real values are included. */
+  function buildCSS(data, enabled) {
     const lines = [];
     const add = (property, value) => {
       if (hasValue(value)) lines.push(property + ': ' + value + ';');
     };
+    const on = (key) => isEnabled(enabled, key);
 
-    add('font-family', data.fontFamily);
-    add('font-size', data.fontSize);
-    add('font-weight', data.fontWeight);
-    add('font-style', data.fontStyle);
-    if (hasValue(data.fontVariant) && data.fontVariant !== 'normal') add('font-variant', data.fontVariant);
-    if (hasValue(data.fontStretch) && !isDefaultStretch(data.fontStretch)) add('font-stretch', data.fontStretch);
-    add('line-height', data.lineHeight);
-    add('letter-spacing', data.letterSpacing);
-    if (hasValue(data.wordSpacing) && data.wordSpacing !== 'normal' && data.wordSpacing !== '0px') {
+    if (on('fontFamily')) add('font-family', data.fontFamily);
+    if (on('fontSize')) add('font-size', data.fontSize);
+    if (on('fontWeight')) add('font-weight', data.fontWeight);
+    if (on('fontStyle')) {
+      add('font-style', data.fontStyle);
+      if (hasValue(data.fontVariant) && data.fontVariant !== 'normal') add('font-variant', data.fontVariant);
+      if (hasValue(data.fontStretch) && !isDefaultStretch(data.fontStretch)) add('font-stretch', data.fontStretch);
+    }
+    if (on('lineHeight')) add('line-height', data.lineHeight);
+    if (on('letterSpacing')) add('letter-spacing', data.letterSpacing);
+    if (on('wordSpacing') && hasValue(data.wordSpacing) && !isDefaultSpacing(data.wordSpacing)) {
       add('word-spacing', data.wordSpacing);
     }
-    add('color', data.color);
-    add('text-align', data.textAlign);
-    add('text-transform', data.textTransform);
-    if (hasValue(data.textDecorationLine) && data.textDecorationLine !== 'none') {
+    if (on('fontColor')) add('color', data.color);
+    if (on('textAlign')) add('text-align', data.textAlign);
+    if (on('textTransform')) add('text-transform', data.textTransform);
+    if (on('textDecoration') && hasValue(data.textDecorationLine) && data.textDecorationLine !== 'none') {
       add('text-decoration-line', data.textDecorationLine);
       add('text-decoration-style', data.textDecorationStyle);
       if (data.textDecorationThickness !== 'auto') add('text-decoration-thickness', data.textDecorationThickness);
     }
     return lines.join('\n');
+  }
+
+  /** Wraps declarations in a rule: ".hero-title {\n  font-size: 18px;\n}" */
+  function wrapRule(css, selector) {
+    if (!css || !selector) return css;
+    return selector + ' {\n' + css.split('\n').map((line) => '  ' + line).join('\n') + '\n}';
   }
 
   function colorForInfo(raw) {
@@ -187,28 +205,33 @@
   }
 
   /** Builds the readable summary for "Copy Info". */
-  function buildInfo(data, elementInfo) {
+  function buildInfo(data, elementInfo, enabled) {
     const lines = ['AlphaFonts Font Inspector', ''];
     const add = (label, value) => {
       if (hasValue(value)) lines.push(label + ': ' + value);
     };
+    const on = (key) => isEnabled(enabled, key);
 
-    add('Font Family', data.fontFamily);
-    add('Likely Rendered Font', data.renderedFont);
-    add('Font Size', data.fontSize);
-    add('Font Weight', data.fontWeight);
-    add('Font Style', data.fontStyle);
-    if (hasValue(data.fontVariant) && data.fontVariant !== 'normal') add('Font Variant', data.fontVariant);
-    if (hasValue(data.fontStretch) && !isDefaultStretch(data.fontStretch)) add('Font Stretch', data.fontStretch);
-    add('Line Height', data.lineHeight);
-    add('Letter Spacing', data.letterSpacing);
-    if (hasValue(data.wordSpacing) && data.wordSpacing !== 'normal' && data.wordSpacing !== '0px') {
+    if (on('fontFamily')) {
+      add('Font Family', data.fontFamily);
+      add('Likely Rendered Font', data.renderedFont);
+    }
+    if (on('fontSize')) add('Font Size', data.fontSize);
+    if (on('fontWeight')) add('Font Weight', data.fontWeight);
+    if (on('fontStyle')) {
+      add('Font Style', data.fontStyle);
+      if (hasValue(data.fontVariant) && data.fontVariant !== 'normal') add('Font Variant', data.fontVariant);
+      if (hasValue(data.fontStretch) && !isDefaultStretch(data.fontStretch)) add('Font Stretch', data.fontStretch);
+    }
+    if (on('lineHeight')) add('Line Height', data.lineHeight);
+    if (on('letterSpacing')) add('Letter Spacing', data.letterSpacing);
+    if (on('wordSpacing') && hasValue(data.wordSpacing) && !isDefaultSpacing(data.wordSpacing)) {
       add('Word Spacing', data.wordSpacing);
     }
-    if (hasValue(data.color)) add('Color', colorForInfo(data.color));
-    add('Text Align', data.textAlign);
-    add('Text Transform', data.textTransform);
-    if (hasValue(data.textDecorationLine) && data.textDecorationLine !== 'none') {
+    if (on('fontColor') && hasValue(data.color)) add('Color', colorForInfo(data.color));
+    if (on('textAlign')) add('Text Align', data.textAlign);
+    if (on('textTransform')) add('Text Transform', data.textTransform);
+    if (on('textDecoration') && hasValue(data.textDecorationLine) && data.textDecorationLine !== 'none') {
       add('Text Decoration', [data.textDecorationLine, data.textDecorationStyle].filter(hasValue).join(' '));
     }
     if (hasValue(data.opacity) && data.opacity !== '1') add('Opacity', data.opacity);
@@ -347,6 +370,7 @@
     getTypographyData,
     detectRenderedFont,
     buildCSS,
+    wrapRule,
     buildInfo,
     describeElement,
     generateSelector

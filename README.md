@@ -2,10 +2,11 @@
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 2.0.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.1.0 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
+![Live editing](screenshots/inspector-edit.png)
 
 ## Features
 
@@ -19,6 +20,11 @@ Made by [AlphaFonts](https://alphafonts.com). Version 2.0.0 for Google Chrome (M
 - **Click-to-lock** - freeze the panel so you can move the mouse and press buttons.
 - **Keyboard shortcut** - `Alt + Shift + F` toggles the inspector.
 - **Right-click inspection** - right-click a page, then choose **AlphaFonts > Inspect Font**.
+- **Choose your properties** - 11 checkboxes (font family, size, weight, style, color, line height, letter spacing, word spacing, text align, text transform, text decoration). Only the checked ones appear in the panel, in Copy CSS and in Copy Info.
+- **Show all info on hover** - on: hover shows the full panel; off: hover shows a small card with just your chosen properties.
+- **HEX or RGB colors** - one switch in the popup (also in Options and in the panel).
+- **Live value editing** - lock a text, press **Edit values**, and change family, size, weight, style, color, spacing, align, transform or decoration right on the page. Arrow keys step number fields. **Reset edits** undoes one element; **Remove layers** (popup) closes the inspector and undoes everything.
+- **Options page** - every setting in one place, plus "Copy CSS as a full rule" (`.selector { ... }`).
 - **Live preview** - a short sample of the text you picked, drawn with its detected typography.
 - **Light and dark mode** - use the sun/moon button in the popup, or in the panel once it is locked. Your choice is remembered.
 
@@ -44,7 +50,7 @@ The AlphaFonts icon now appears in the toolbar. Click the puzzle-piece icon and 
 2. Click **Start Inspecting**.
 3. Hover over text. A highlight and a panel show its typography.
 4. Click the text to **lock** the panel. The status changes to "Locked".
-5. Press **Copy CSS**, **Copy Info**, or **Copy Selector**. Click the color value to copy the color.
+5. Press **Copy CSS**, **Copy Info**, or **Copy Selector**. Click the color value to copy the color. Press **Edit values** to try changes live.
 6. Press **Esc** (or **Stop Inspecting**) to leave. Everything is removed from the page.
 
 While inspecting, clicks are used to pick text, so links and buttons on the page do not trigger. They work normally again as soon as you exit.
@@ -76,6 +82,7 @@ Being honest about what V1 cannot do:
 - **Iframes.** Only the main page is inspected. Text inside an iframe (especially from another website, such as embedded videos or payment forms) cannot be inspected and is ignored without errors. When the pointer moves into an iframe, the last highlight may stay visible until you click or move back onto the page.
 - **Shadow DOM.** Text inside *open* shadow roots is inspected. Text inside *closed* shadow roots is reported as the host element at best.
 - **Rendered font is a guess.** Browsers do not tell pages which font file was drawn. The "likely rendered" line compares text widths to find the first available font. It cannot detect per-character fallbacks, and it stays hidden when the stack starts with a system font.
+- **Live edits are temporary.** They change the page only in your browser, are not saved, and disappear on reload. Edits are written as inline `!important` styles, so they win over the site's CSS.
 - **PDFs and some special viewers** (such as Chrome's built-in PDF viewer) do not allow extensions.
 - **Wide-gamut colors.** Colors written as `lab()`, `oklch()`, and similar are shown exactly as the browser reports them, without a HEX conversion.
 
@@ -98,9 +105,15 @@ Permissions used, and why:
 | `activeTab` | Lets the extension work on the tab you just clicked, used, or right-clicked, only for that moment. No "read all websites" access is requested. |
 | `scripting` | Injects the inspector into that tab when you start it. |
 | `contextMenus` | Adds the **AlphaFonts > Inspect Font** right-click item. |
-| `storage` | Remembers your light/dark choice on your own computer. Nothing else is stored. |
+| `storage` | Saves your settings (theme, chosen properties, switches) on your own computer. Nothing else is stored. |
 
-## What's new in 2.0
+## What's new in 2.1
+
+- Choose which properties to show and copy (11 toggles), plus "Show all info on hover" and a HEX/RGB switch.
+- Edit values live on the page, with Reset and **Remove layers**.
+- New Options page and a "Toggle extension info" section in the popup.
+
+## What was new in 2.0
 
 - The panel preview now shows the text you selected instead of a fixed sentence.
 - Light mode with a sun/moon switch (popup and locked panel), remembered between visits.
@@ -118,7 +131,8 @@ src/content/             The inspector that runs inside webpages
   panel.js               Highlight box, floating panel, toast (inside a Shadow DOM)
   inspector.css          Styles for the panel
 src/popup/               The toolbar popup
-src/shared/              Constants and helpers (colors, font stacks, restricted URLs)
+src/options/             The options page
+src/shared/              Constants, settings storage, helpers (colors, font stacks, restricted URLs)
 src/icons/               Extension icons
 tests/                   Unit tests for the pure helpers
 ```

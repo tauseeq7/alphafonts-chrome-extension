@@ -11,6 +11,7 @@
   const AF = (globalThis.AlphaFonts = globalThis.AlphaFonts || {});
   const { UNAVAILABLE, WEBSITE_URL } = AF.constants;
   const utils = AF.utils;
+  const { PROPERTIES } = AF.settings;
 
   const HOST_TAG = 'alphafonts-inspector';
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -18,6 +19,30 @@
   const GAP = 12; // space between the element and the panel
   const MARGIN = 8; // minimum space between the panel and the viewport edge
   const COPIED_LABEL = 'Copied ✓';
+
+  const STAT_KEYS = ['fontSize', 'fontWeight', 'fontStyle', 'lineHeight', 'letterSpacing'];
+  const STAT_LABELS = { fontSize: 'Size', fontWeight: 'Weight', fontStyle: 'Style', lineHeight: 'Line height', letterSpacing: 'Spacing' };
+  // Secondary properties that live in the "More typography" section.
+  const MORE_KEYS = [
+    ['textAlign', 'Align'], ['textTransform', 'Transform'], ['textDecoration', 'Decoration'], ['wordSpacing', 'Word spacing']
+  ];
+
+  // Fields shown in edit mode. `css` is the property that is changed on the page,
+  // `data` is where its current value is read from.
+  const WEIGHTS = ['100', '200', '300', '400', '500', '600', '700', '800', '900'];
+  const EDIT_FIELDS = [
+    { key: 'fontFamily', label: 'Family', css: 'font-family', data: 'fontFamily', kind: 'text' },
+    { key: 'fontSize', label: 'Size', css: 'font-size', data: 'fontSize', kind: 'text', step: 1 },
+    { key: 'fontWeight', label: 'Weight', css: 'font-weight', data: 'fontWeight', kind: 'select', options: WEIGHTS },
+    { key: 'fontStyle', label: 'Style', css: 'font-style', data: 'fontStyle', kind: 'select', options: ['normal', 'italic', 'oblique'] },
+    { key: 'fontColor', label: 'Color', css: 'color', data: 'color', kind: 'color' },
+    { key: 'lineHeight', label: 'Line height', css: 'line-height', data: 'lineHeight', kind: 'text', step: 1 },
+    { key: 'letterSpacing', label: 'Spacing', css: 'letter-spacing', data: 'letterSpacing', kind: 'text', step: 0.1 },
+    { key: 'wordSpacing', label: 'Word spacing', css: 'word-spacing', data: 'wordSpacing', kind: 'text', step: 1 },
+    { key: 'textAlign', label: 'Align', css: 'text-align', data: 'textAlign', kind: 'select', options: ['left', 'center', 'right', 'justify', 'start', 'end'] },
+    { key: 'textTransform', label: 'Transform', css: 'text-transform', data: 'textTransform', kind: 'select', options: ['none', 'uppercase', 'lowercase', 'capitalize'] },
+    { key: 'textDecoration', label: 'Decoration', css: 'text-decoration-line', data: 'textDecorationLine', kind: 'select', options: ['none', 'underline', 'line-through', 'overline'] }
+  ];
 
   // ---------------------------------------------------------------------
   // Tiny DOM helpers
@@ -87,13 +112,34 @@
     return { width: el.clientWidth || window.innerWidth, height: el.clientHeight || window.innerHeight };
   }
 
+  /** The text shown for each property in the panel. */
+  function displayValue(key, data, colorFormat) {
+    switch (key) {
+      case 'fontFamily': return data.fontFamily;
+      case 'fontColor': return data.color ? utils.formatColor(data.color, colorFormat) : null;
+      case 'textDecoration':
+        if (!data.textDecorationLine) return null;
+        return data.textDecorationLine === 'none' ? 'none' : [data.textDecorationLine, data.textDecorationStyle].filter(Boolean).join(' ');
+      default: return data[key];
+    }
+  }
+
+  /** "18px" + ArrowUp -> "19px". Returns null when the value is not a plain number with a unit. */
+  function stepValue(text, direction, step) {
+    const match = String(text).trim().match(/^(-?\d*\.?\d+)([a-z%]*)$/i);
+    if (!match) return null;
+    const next = Math.round((parseFloat(match[1]) + direction * step) * 100) / 100;
+    return next + match[2];
+  }
+
   // ---------------------------------------------------------------------
   // Panel
   // ---------------------------------------------------------------------
 
   /**
-   * handlers: { onCopyCSS, onCopyInfo, onCopySelector, onCopyColor,
-   *             onColorFormat(format), onThemeToggle, onUnlock, onStop, onLayoutChange }
+   * handlers: { onCopyCSS, onCopyInfo, onCopySelector, onCopyColor, onColorFormat(format),
+   *             onThemeToggle, onUnlock, onStop, onLayoutChange,
+   *             onToggleEdit, onEdit(cssProperty, value) -> boolean, onResetEdits }
    */
   function createPanel(handlers) {
     // Remove leftovers from an older copy of the extension (e.g. after an update).
@@ -113,14 +159,12 @@
     const ui = {};
     const timers = new Set();
     let colorFormat = 'hex';
-    let selectorText = '';
 
     // ----- Build the DOM -----
 
     ui.highlight = h('div', { class: 'af-highlight', hidden: true });
 
     ui.themeBtn = h('button', { type: 'button', class: 'af-theme', hidden: true });
-
     ui.statusDot = h('span', { class: 'af-dot' });
     ui.statusText = h('span', {}, 'Inspecting');
     ui.status = h('span', { class: 'af-status', role: 'status' }, [ui.statusDot, ui.statusText]);
@@ -128,16 +172,17 @@
     ui.family = h('p', { class: 'af-family' });
     ui.renderedName = h('strong');
     ui.rendered = h('p', { class: 'af-rendered', hidden: true }, ['Likely rendered: ', ui.renderedName]);
+    ui.familySection = h('div', { class: 'af-section af-full af-view' }, [h('h2', { class: 'af-label' }, 'Font family stack'), ui.family, ui.rendered]);
 
     ui.stats = {};
+    ui.statBoxes = {};
     const statsList = h('dl', { class: 'af-stats' });
-    for (const [key, label] of [
-      ['fontSize', 'Size'], ['fontWeight', 'Weight'], ['fontStyle', 'Style'],
-      ['lineHeight', 'Line height'], ['letterSpacing', 'Spacing']
-    ]) {
+    for (const key of STAT_KEYS) {
       ui.stats[key] = h('dd');
-      statsList.append(h('div', { class: 'af-stat' }, [h('dt', {}, label), ui.stats[key]]));
+      ui.statBoxes[key] = h('div', { class: 'af-stat' }, [h('dt', {}, STAT_LABELS[key]), ui.stats[key]]);
+      statsList.append(ui.statBoxes[key]);
     }
+    ui.statsSection = h('div', { class: 'af-section af-full af-view' }, [h('h2', { class: 'af-label' }, 'Typography'), statsList]);
 
     ui.swatch = h('span', { class: 'af-swatch' });
     ui.colorValue = h('span', { class: 'af-color-value' });
@@ -145,31 +190,45 @@
     ui.hexBtn = h('button', { type: 'button', 'data-format': 'hex', 'aria-pressed': 'true' }, 'HEX');
     ui.rgbBtn = h('button', { type: 'button', 'data-format': 'rgb', 'aria-pressed': 'false' }, 'RGB');
     const formatSwitch = h('div', { class: 'af-segmented', role: 'group', 'aria-label': 'Color format' }, [ui.hexBtn, ui.rgbBtn]);
+    ui.colorSection = h('div', { class: 'af-section af-full af-view' }, [h('h2', { class: 'af-label' }, 'Color'), h('div', { class: 'af-color-row' }, [ui.colorBtn, formatSwitch])]);
+
+    // Edit form (filled when edit mode starts)
+    ui.editForm = h('div', { class: 'af-fields' });
+    ui.editSection = h('div', { class: 'af-section af-full af-edit' }, [h('h2', { class: 'af-label' }, 'Edit values (live on this page)'), ui.editForm]);
 
     ui.preview = h('div', { class: 'af-preview', 'aria-label': 'Typography preview' }, PREVIEW_TEXT);
+    ui.previewSection = h('div', { class: 'af-section af-full' }, [h('h2', { class: 'af-label' }, 'Preview'), ui.preview]);
 
     ui.moreRows = h('dl', { class: 'af-rows' });
-    ui.more = h('details', { class: 'af-details' }, [h('summary', {}, 'More typography'), ui.moreRows]);
+    ui.more = h('details', { class: 'af-details af-full af-view' }, [h('summary', {}, 'More typography'), ui.moreRows]);
 
     ui.elementHint = h('span', { class: 'af-summary-hint' });
     ui.elementRows = h('dl', { class: 'af-rows' });
-    ui.element = h('details', { class: 'af-details' }, [
+    ui.element = h('details', { class: 'af-details af-full af-view' }, [
       h('summary', {}, ['Element', ui.elementHint]),
       ui.elementRows
     ]);
+
+    // Compact hover card: just the properties the person chose.
+    ui.compactRows = h('dl', { class: 'af-rows af-compact-rows' });
+    ui.compactSection = h('div', { class: 'af-section af-compact-only' }, [ui.compactRows]);
+
+    ui.empty = h('p', { class: 'af-empty', hidden: true }, 'No properties selected. Choose some in the AlphaFonts popup.');
 
     ui.copyCss = h('button', { type: 'button', class: 'af-btn af-btn-primary', 'data-label': 'Copy CSS' }, 'Copy CSS');
     ui.copyInfo = h('button', { type: 'button', class: 'af-btn', 'data-label': 'Copy Info' }, 'Copy Info');
     ui.copySelector = h('button', { type: 'button', class: 'af-btn', 'data-label': 'Copy Selector' }, 'Copy Selector');
     ui.unlock = h('button', { type: 'button', class: 'af-btn' }, 'Unlock');
+    ui.editBtn = h('button', { type: 'button', class: 'af-btn', 'aria-pressed': 'false' }, 'Edit values');
+    ui.resetBtn = h('button', { type: 'button', class: 'af-btn', disabled: true }, 'Reset edits');
     ui.link = h('a', { class: 'af-link', href: WEBSITE_URL, target: '_blank', rel: 'noopener noreferrer' }, 'Find more font tools at AlphaFonts');
-    ui.actions = h('div', { class: 'af-actions', hidden: true }, [ui.copyCss, ui.copyInfo, ui.copySelector, ui.unlock, ui.link]);
+    ui.actions = h('div', { class: 'af-actions', hidden: true }, [ui.copyCss, ui.copyInfo, ui.copySelector, ui.unlock, ui.editBtn, ui.resetBtn, ui.link]);
 
     ui.hint = h('span', {});
     ui.stop = h('button', { type: 'button', class: 'af-stop', hidden: true }, 'Stop Inspecting');
     const foot = h('div', { class: 'af-foot' }, [ui.hint, ui.stop]);
 
-    ui.panel = h('div', { class: 'af-panel', role: 'dialog', 'aria-label': 'AlphaFonts Font Inspector', tabindex: '-1', hidden: true, 'data-locked': 'false' }, [
+    ui.panel = h('div', { class: 'af-panel', role: 'dialog', 'aria-label': 'AlphaFonts Font Inspector', tabindex: '-1', hidden: true, 'data-locked': 'false', 'data-compact': 'false', 'data-editing': 'false' }, [
       h('div', { class: 'af-head' }, [
         h('div', { class: 'af-brand' }, [
           createLogo(),
@@ -177,46 +236,53 @@
         ]),
         h('div', { class: 'af-head-actions' }, [ui.themeBtn, ui.status])
       ]),
-      h('div', { class: 'af-section' }, [h('h2', { class: 'af-label' }, 'Font family stack'), ui.family, ui.rendered]),
-      h('div', { class: 'af-section' }, [h('h2', { class: 'af-label' }, 'Typography'), statsList]),
-      h('div', { class: 'af-section' }, [h('h2', { class: 'af-label' }, 'Color'), h('div', { class: 'af-color-row' }, [ui.colorBtn, formatSwitch])]),
-      h('div', { class: 'af-section' }, [h('h2', { class: 'af-label' }, 'Preview'), ui.preview]),
+      ui.compactSection,
+      ui.familySection,
+      ui.statsSection,
+      ui.colorSection,
+      ui.editSection,
+      ui.previewSection,
       ui.more,
       ui.element,
+      ui.empty,
       ui.actions,
       foot
     ]);
 
     ui.toast = h('div', { class: 'af-toast', role: 'status', 'aria-live': 'polite', hidden: true });
-    ui.clipboardArea = null;
 
     shadow.append(ui.highlight, ui.panel, ui.toast);
 
     // ----- Wire up events -----
 
-    const press = (button, handler) => button.addEventListener('click', () => handler && handler());
+    const press = (button, handler) => button.addEventListener('click', () => handler());
     press(ui.copyCss, () => handlers.onCopyCSS());
     press(ui.copyInfo, () => handlers.onCopyInfo());
     press(ui.copySelector, () => handlers.onCopySelector());
     press(ui.colorBtn, () => handlers.onCopyColor(ui.colorValue.textContent));
     press(ui.unlock, () => handlers.onUnlock());
     press(ui.themeBtn, () => handlers.onThemeToggle());
+    press(ui.editBtn, () => handlers.onToggleEdit());
+    press(ui.resetBtn, () => handlers.onResetEdits());
     press(ui.stop, () => handlers.onStop());
     for (const button of [ui.hexBtn, ui.rgbBtn]) {
       button.addEventListener('click', () => {
-        if (button.disabled) return;
-        handlers.onColorFormat(button.getAttribute('data-format'));
+        if (!button.disabled) handlers.onColorFormat(button.getAttribute('data-format'));
       });
     }
     // Opening/closing a section changes the panel height, so it may need to move.
     ui.more.addEventListener('toggle', () => handlers.onLayoutChange());
     ui.element.addEventListener('toggle', () => handlers.onLayoutChange());
     ui.panel.addEventListener('keydown', trapTab);
+    // Typing in the panel's edit fields must not trigger the website's own keyboard shortcuts.
+    for (const type of ['keydown', 'keyup', 'keypress']) {
+      ui.panel.addEventListener(type, (event) => event.stopPropagation());
+    }
 
     /** Keeps Tab inside the panel while it is locked. */
     function trapTab(event) {
       if (event.key !== 'Tab') return;
-      const focusable = Array.from(ui.panel.querySelectorAll('button, a[href], summary')).filter(
+      const focusable = Array.from(ui.panel.querySelectorAll('button, a[href], summary, input, select')).filter(
         (el) => !el.disabled && el.offsetParent !== null
       );
       if (!focusable.length) return;
@@ -246,18 +312,18 @@
       ui.colorBtn.disabled = !raw;
 
       // Transparent colors always show rgba(), so the format switch has nothing to change.
-      const switchable = !!parsed && canUseHex;
-      const activeFormat = switchable ? colorFormat : 'rgb';
-      ui.hexBtn.disabled = !switchable;
-      ui.rgbBtn.disabled = !switchable;
-      ui.hexBtn.setAttribute('aria-pressed', String(switchable && activeFormat === 'hex'));
-      ui.rgbBtn.setAttribute('aria-pressed', String(switchable && activeFormat === 'rgb'));
-      const reason = switchable ? '' : 'Transparent or unsupported colors are shown as written, so no alpha is lost.';
+      const activeFormat = canUseHex ? colorFormat : 'rgb';
+      ui.hexBtn.disabled = !canUseHex;
+      ui.rgbBtn.disabled = !canUseHex;
+      ui.hexBtn.setAttribute('aria-pressed', String(canUseHex && activeFormat === 'hex'));
+      ui.rgbBtn.setAttribute('aria-pressed', String(canUseHex && activeFormat === 'rgb'));
+      const reason = canUseHex ? '' : 'Transparent or unsupported colors are shown as written, so no alpha is lost.';
       ui.hexBtn.title = reason;
       ui.rgbBtn.title = reason;
     }
 
     function renderPreview(data) {
+      ui.preview.textContent = data.previewText || PREVIEW_TEXT;
       const style = ui.preview.style;
       style.fontFamily = data.fontFamily || 'inherit';
       // Cap the size so a giant heading does not make the panel huge.
@@ -275,23 +341,29 @@
       style.backgroundColor = darkText ? '#f6f8fa' : '#0d1117';
     }
 
-    function renderMore(data) {
+    function renderMore(data, enabled) {
       ui.moreRows.replaceChildren();
-      const rows = [
-        ['Align', data.textAlign],
-        ['Transform', data.textTransform],
-        ['Decoration', data.textDecorationLine && data.textDecorationLine !== 'none'
-          ? [data.textDecorationLine, data.textDecorationStyle].filter(Boolean).join(' ')
-          : data.textDecorationLine],
-        ['Word spacing', data.wordSpacing],
-        ['Variant', data.fontVariant],
-        ['Stretch', data.fontStretch],
-        ['Opacity', data.opacity],
-        ['White space', data.whiteSpace],
-        ['Rendering', data.textRendering]
+      for (const [key, label] of MORE_KEYS) {
+        const value = displayValue(key, data, colorFormat);
+        if (enabled[key] && value) addRow(ui.moreRows, label, value);
+      }
+      // Extra details that are always useful to have at hand.
+      const extras = [
+        ['Variant', data.fontVariant], ['Stretch', data.fontStretch], ['Opacity', data.opacity],
+        ['White space', data.whiteSpace], ['Rendering', data.textRendering]
       ];
-      for (const [label, value] of rows) {
+      for (const [label, value] of extras) {
         if (value) addRow(ui.moreRows, label, value);
+      }
+      show(ui.more, ui.moreRows.childElementCount > 0);
+    }
+
+    function renderCompact(data, enabled) {
+      ui.compactRows.replaceChildren();
+      for (const { key, label } of PROPERTIES) {
+        if (!enabled[key]) continue;
+        const value = displayValue(key, data, colorFormat);
+        addRow(ui.compactRows, label, orUnavailable(value));
       }
     }
 
@@ -300,35 +372,47 @@
       addRow(ui.elementRows, 'Tag', element.tag.toLowerCase());
       if (element.classes) addRow(ui.elementRows, 'Class', element.classes);
       if (element.id) addRow(ui.elementRows, 'ID', element.id);
-      selectorText = element.selector || '';
-      if (selectorText) addRow(ui.elementRows, 'Selector', selectorText);
+      if (element.selector) addRow(ui.elementRows, 'Selector', element.selector);
 
       const firstClass = element.classes ? '.' + element.classes.split(' ')[0] : '';
       ui.elementHint.textContent = element.tag.toLowerCase() + (element.id ? '#' + element.id : firstClass);
     }
 
-    /** model: { data, element, colorFormat } */
+    /** model: { data, element, settings } */
     function render(model) {
-      const { data, element } = model;
-      colorFormat = model.colorFormat || colorFormat;
+      const { data, element, settings } = model;
+      const enabled = settings.properties;
+      colorFormat = settings.colorFormat;
+
       ui.family.textContent = orUnavailable(data.fontFamily);
-      ui.preview.textContent = data.previewText || PREVIEW_TEXT;
       ui.renderedName.textContent = data.renderedFont || '';
       show(ui.rendered, !!data.renderedFont);
-      for (const key of Object.keys(ui.stats)) ui.stats[key].textContent = orUnavailable(data[key]);
+      show(ui.familySection, enabled.fontFamily);
+
+      for (const key of STAT_KEYS) {
+        ui.stats[key].textContent = orUnavailable(data[key]);
+        show(ui.statBoxes[key], enabled[key]);
+      }
+      show(ui.statsSection, STAT_KEYS.some((key) => enabled[key]));
+
       renderColor(data.color);
+      show(ui.colorSection, enabled.fontColor);
       renderPreview(data);
-      renderMore(data);
+      renderMore(data, enabled);
+      renderCompact(data, enabled);
       renderElement(element);
+      show(ui.empty, !PROPERTIES.some((p) => enabled[p.key]));
     }
+
+    // ----- Modes -----
 
     function setLocked(locked) {
       ui.panel.setAttribute('data-locked', String(locked));
       ui.highlight.setAttribute('data-locked', String(locked));
       ui.statusText.textContent = locked ? 'Locked' : 'Inspecting';
       show(ui.actions, locked);
-      show(ui.themeBtn, locked); // the panel only takes clicks while locked
       show(ui.stop, locked);
+      show(ui.themeBtn, locked); // the panel only takes clicks while locked
       ui.hint.replaceChildren();
       if (locked) {
         ui.hint.append(h('span', { class: 'af-kbd' }, 'ESC'), ' to exit');
@@ -337,7 +421,11 @@
       }
     }
 
-    /** theme: 'dark' | 'light' */
+    /** Compact = small hover card with only the chosen properties. */
+    function setCompact(compact) {
+      ui.panel.setAttribute('data-compact', String(compact));
+    }
+
     function setTheme(theme) {
       const light = theme === 'light';
       host.setAttribute('data-theme', light ? 'light' : 'dark');
@@ -345,6 +433,73 @@
       ui.themeBtn.setAttribute('aria-label', label);
       ui.themeBtn.title = label;
       ui.themeBtn.replaceChildren(createThemeIcon(light ? 'light' : 'dark'));
+    }
+
+    // ----- Edit mode -----
+
+    function buildField(field, data) {
+      const current = data[field.data] || '';
+      let input;
+      const extra = [];
+
+      if (field.kind === 'select') {
+        input = h('select', { 'aria-label': field.label });
+        const options = field.options.includes(current) || !current ? field.options : [current].concat(field.options);
+        for (const option of options) input.append(h('option', { value: option }, option));
+        input.value = current || field.options[0];
+        input.addEventListener('change', () => applyEdit(field, input));
+      } else {
+        input = h('input', { type: 'text', value: current, 'aria-label': field.label, spellcheck: 'false', autocomplete: 'off' });
+        input.addEventListener('input', () => applyEdit(field, input));
+        if (field.step) {
+          input.addEventListener('keydown', (event) => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+            const step = event.shiftKey ? field.step * 10 : field.step;
+            const next = stepValue(input.value, event.key === 'ArrowUp' ? 1 : -1, step);
+            if (next === null) return;
+            event.preventDefault();
+            input.value = next;
+            applyEdit(field, input);
+          });
+        }
+        if (field.kind === 'color') {
+          const picker = h('input', { type: 'color', 'aria-label': 'Pick a color', class: 'af-picker' });
+          const parsed = utils.parseColor(current);
+          picker.value = parsed ? utils.toHex(parsed) : '#000000';
+          picker.addEventListener('input', () => {
+            input.value = picker.value;
+            applyEdit(field, input);
+          });
+          input.addEventListener('input', () => {
+            const color = utils.parseColor(input.value);
+            if (color && utils.isOpaque(color)) picker.value = utils.toHex(color);
+          });
+          extra.push(picker);
+        }
+      }
+      return h('label', { class: 'af-field' }, [h('span', {}, field.label), h('span', { class: 'af-field-input' }, [input].concat(extra))]);
+    }
+
+    function applyEdit(field, input) {
+      const ok = handlers.onEdit(field.css, input.value);
+      input.setAttribute('aria-invalid', String(!ok));
+    }
+
+    /** Turns edit mode on (building the form from the current values) or off. */
+    function setEditing(editing, data, enabled) {
+      ui.panel.setAttribute('data-editing', String(editing));
+      ui.editBtn.setAttribute('aria-pressed', String(editing));
+      ui.editBtn.textContent = editing ? 'Done editing' : 'Edit values';
+      ui.editForm.replaceChildren();
+      if (editing && data) {
+        const fields = EDIT_FIELDS.filter((f) => enabled[f.key]);
+        for (const field of fields) ui.editForm.append(buildField(field, data));
+        if (!fields.length) ui.editForm.append(h('p', { class: 'af-empty' }, 'Select properties in the popup to edit them.'));
+      }
+    }
+
+    function setEdited(edited) {
+      ui.resetBtn.disabled = !edited;
     }
 
     // ----- Positioning -----
@@ -471,7 +626,10 @@
       },
       render,
       setLocked,
+      setCompact,
       setTheme,
+      setEditing,
+      setEdited,
       setHighlight,
       place,
       showPanel(visible) {

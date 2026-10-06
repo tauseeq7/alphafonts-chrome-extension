@@ -19,6 +19,7 @@ const PANEL_CSS_PATH = 'src/content/inspector.css';
 const CONTENT_FILES = [
   'src/shared/constants.js',
   'src/shared/utils.js',
+  'src/shared/settings.js',
   'src/content/typography.js',
   'src/content/panel.js',
   'src/content/content.js'
@@ -68,6 +69,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case MESSAGES.START_INSPECTOR:
     case MESSAGES.STOP_INSPECTOR:
     case MESSAGES.TOGGLE_INSPECTOR:
+    case MESSAGES.REMOVE_LAYERS:
     case MESSAGES.GET_STATUS:
       handlePopupRequest(message).then(sendResponse);
       return true;
@@ -101,6 +103,7 @@ async function handlePopupRequest(message) {
   try {
     const tab = await chrome.tabs.get(message.tabId);
     if (message.type === MESSAGES.GET_STATUS) return await getStatus(tab);
+    if (message.type === MESSAGES.REMOVE_LAYERS) return await removeLayers(tab);
     return await sendToTab(tab, message.type);
   } catch (e) {
     return { ok: false, error: ERRORS.START_FAILED };
@@ -116,12 +119,21 @@ async function getStatus(tab) {
   if (isRestrictedUrl(tab.url)) return { ok: false, error: ERRORS.RESTRICTED_PAGE };
   try {
     const reply = await chrome.tabs.sendMessage(tab.id, { type: MESSAGES.GET_STATUS });
-    return { ok: true, active: !!(reply && reply.active) };
+    return { ok: true, active: !!(reply && reply.active), edited: !!(reply && reply.edited) };
   } catch (e) {
     // Not injected yet: that is normal. But Chrome hides the URL of some pages
     // (e.g. chrome://), so if we cannot read it, check that scripts are allowed here.
     if (!tab.url && !(await canRunScripts(tab.id))) return { ok: false, error: ERRORS.RESTRICTED_PAGE };
     return { ok: true, active: false };
+  }
+}
+
+/** Closes the inspector and undoes live edits. If the inspector was never loaded there is nothing to remove. */
+async function removeLayers(tab) {
+  try {
+    return await chrome.tabs.sendMessage(tab.id, { type: MESSAGES.REMOVE_LAYERS });
+  } catch (e) {
+    return { ok: true, active: false, edited: false };
   }
 }
 

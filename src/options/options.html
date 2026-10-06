@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AlphaFonts Font Inspector - Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect x="0.5" y="0.5" width="31" height="31" rx="7" fill="#0d1117" stroke="#30363d"/>
+        <path d="M8 24 L16 7.5 L24 24 M11.2 18.8 H20.8" fill="none" stroke="#3dd6b0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 28 H26" fill="none" stroke="#8b949e" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1>AlphaFonts Font Inspector</h1>
+        <p class="muted">Options &middot; saved automatically on this computer</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Appearance</h2>
+      <div class="radio-row" role="radiogroup" aria-label="Theme">
+        <label><input type="radio" name="theme" value="dark"> Dark</label>
+        <label><input type="radio" name="theme" value="light"> Light</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Properties to show and copy</h2>
+        <span class="mini-actions">
+          <button type="button" class="link-btn" id="props-all">All</button>
+          <button type="button" class="link-btn" id="props-none">None</button>
+        </span>
+      </div>
+      <p class="muted">Only the checked properties appear in the panel, in <strong>Copy CSS</strong> and in <strong>Copy Info</strong>.</p>
+      <div class="checks" id="props"></div>
+    </section>
+
+    <section class="card">
+      <h2>Behavior</h2>
+      <label class="check"><input type="checkbox" id="showAllOnHover"> <span><strong>Show all info on hover</strong><small>Off = hovering shows a small card with only your checked properties. Clicking a text always opens the full panel.</small></span></label>
+      <label class="check"><input type="checkbox" id="hex"> <span><strong>Show HEX value for color</strong><small>Off = show RGB. Transparent colors always show as rgba().</small></span></label>
+      <label class="check"><input type="checkbox" id="copyAsRule"> <span><strong>Copy CSS as a full rule</strong><small>Wraps the copied CSS in the element's selector, for example <code>.hero-title { ... }</code>.</small></span></label>
+    </section>
+
+    <section class="card">
+      <h2>Keyboard shortcut</h2>
+      <p class="muted">Toggle the inspector on any page. Currently: <strong id="shortcut">...</strong></p>
+      <button type="button" class="btn" id="change-shortcut">Change shortcut</button>
+    </section>
+
+    <section class="card">
+      <h2>Live editing</h2>
+      <p class="muted">Lock an element, then press <strong>Edit values</strong> in the panel to try a new size, weight, color and more directly on the page. Use <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> in number fields (hold Shift for bigger steps). Edits are temporary: <strong>Reset edits</strong>, <strong>Remove layers</strong> in the popup, or a page reload undo them.</p>
+    </section>
+
+    <section class="card">
+      <h2>Privacy</h2>
+      <p class="muted">All work happens locally. Nothing about the pages you visit is collected or sent anywhere. Version <span id="version"></span>.</p>
+    </section>
+
+    <div class="bottom">
+      <button type="button" class="btn" id="reset">Reset to defaults</button>
+      <a href="https://alphafonts.com" target="_blank" rel="noopener noreferrer">Visit AlphaFonts &rarr;</a>
+    </div>
+  </main>
+
+  <script src="../shared/constants.js"></script>
+  <script src="../shared/settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

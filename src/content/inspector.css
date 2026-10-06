@@ -401,6 +401,101 @@
   text-align: right;
 }
 
+/* ---------- Modes ---------- */
+
+.af-panel[data-compact='true'] {
+  width: 260px;
+}
+
+.af-panel[data-compact='true'] .af-full,
+.af-panel[data-compact='false'] .af-compact-only,
+.af-panel[data-editing='true'] .af-view,
+.af-panel[data-editing='false'] .af-edit {
+  display: none;
+}
+
+.af-compact-rows {
+  padding-bottom: 4px;
+}
+
+.af-compact-rows .af-row dd {
+  max-width: 62%;
+}
+
+.af-empty {
+  margin: 10px 12px 0;
+  color: var(--af-muted);
+  font-size: 11px;
+}
+
+/* ---------- Edit form ---------- */
+
+.af-fields {
+  display: grid;
+  gap: 6px;
+}
+
+.af-field {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: var(--af-muted);
+  font-size: 11px;
+}
+
+.af-field-input {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.af-field input[type='text'],
+.af-field select {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  color: var(--af-text);
+  background: var(--af-bg2);
+  border: 1px solid var(--af-border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.af-field input[aria-invalid='true'] {
+  border-color: #f85149;
+}
+
+.af-field input:focus-visible,
+.af-field select:focus-visible {
+  outline: 2px solid var(--af-accent-text);
+  outline-offset: 1px;
+}
+
+.af-picker {
+  flex: none;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--af-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.af-btn[aria-pressed='true'] {
+  color: var(--af-on-accent);
+  background: var(--af-accent);
+  border-color: var(--af-accent);
+}
+
+.af-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ---------- Actions and footer ---------- */
 
 .af-actions {

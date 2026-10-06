@@ -4,7 +4,7 @@
  * Injected on demand (popup button, keyboard shortcut or right-click menu).
  * It listens for the mouse while inspection is on, highlights the hovered
  * text element, shows the floating panel and lets the user lock it, copy
- * values and leave with Escape.
+ * values, try new values live, and leave with Escape.
  */
 (function () {
   const AF = (globalThis.AlphaFonts = globalThis.AlphaFonts || {});
@@ -13,8 +13,8 @@
 
   const { MESSAGES, ERRORS } = AF.constants;
   const typography = AF.typography;
+  const settingsStore = AF.settings;
 
-  const THEME_KEY = 'theme';
   const CURSOR_STYLE_ID = 'alphafonts-inspector-cursor';
   // Mouse events we swallow while inspecting, so clicks never reach the page's own handlers.
   const BLOCKED_EVENTS = ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'dblclick', 'auxclick'];
@@ -24,12 +24,12 @@
   const state = {
     active: false,
     locked: false,
+    editing: false,
     panel: null,
+    settings: settingsStore.defaults(),
     element: null, // element currently shown in the panel
     data: null,
     info: null,
-    colorFormat: 'hex',
-    theme: 'dark',
     cursor: { x: 0, y: 0 },
     pendingTarget: null,
     needsHitTest: false, // re-find the element under the cursor (after scroll)
@@ -38,7 +38,10 @@
     watchTimer: 0,
     watchedRect: '',
     cssText: null,
-    starting: null
+    starting: null,
+    // Live edits made from the panel: element -> Map(cssProperty -> original inline value).
+    // They stay on the page after the inspector closes, until "Remove layers" or a reload.
+    edits: new Map()
   };
 
   // ---------------------------------------------------------------------
@@ -64,33 +67,41 @@
   }
 
   // ---------------------------------------------------------------------
-  // Theme (light / dark), remembered between pages and shared with the popup
+  // Settings (shared with the popup and options page)
   // ---------------------------------------------------------------------
 
-  async function loadTheme() {
-    try {
-      const stored = await chrome.storage.local.get(THEME_KEY);
-      state.theme = stored[THEME_KEY] === 'light' ? 'light' : 'dark';
-    } catch (e) {
-      state.theme = 'dark';
+  /** Applies new settings to a running panel. */
+  function applySettings(settings) {
+    state.settings = settings;
+    if (!state.panel) return;
+    state.panel.setTheme(settings.theme);
+    if (state.element && state.data) {
+      state.panel.setCompact(!state.locked && !settings.showAllOnHover);
+      renderPanel();
+      if (state.editing) state.panel.setEditing(true, state.data, settings.properties);
+      updateLayout();
     }
+  }
+
+  function handleStorageChange(changes, area) {
+    const next = settingsStore.fromChange(changes, area);
+    if (next) applySettings(next);
+  }
+
+  function saveSetting(patch) {
+    settingsStore.save(patch);
   }
 
   function toggleTheme() {
-    state.theme = state.theme === 'light' ? 'dark' : 'light';
-    state.panel.setTheme(state.theme);
-    try {
-      chrome.storage.local.set({ [THEME_KEY]: state.theme });
-    } catch (e) {
-      // Not remembered, but it still works for this page.
-    }
+    const theme = state.settings.theme === 'light' ? 'dark' : 'light';
+    applySettings({ ...state.settings, theme });
+    saveSetting({ theme });
   }
 
-  /** The popup can change the theme while the inspector is open. */
-  function handleStorageChange(changes, area) {
-    if (area !== 'local' || !changes[THEME_KEY] || !state.panel) return;
-    state.theme = changes[THEME_KEY].newValue === 'light' ? 'light' : 'dark';
-    state.panel.setTheme(state.theme);
+  function setColorFormat(format) {
+    const colorFormat = format === 'rgb' ? 'rgb' : 'hex';
+    applySettings({ ...state.settings, colorFormat });
+    saveSetting({ colorFormat });
   }
 
   // ---------------------------------------------------------------------
@@ -102,7 +113,7 @@
     if (!state.starting) {
       state.starting = (async () => {
         const css = await loadPanelStyles();
-        await loadTheme();
+        state.settings = await settingsStore.load();
         const panel = AF.createPanel({
           onCopyCSS: copyCSS,
           onCopyInfo: copyFontInfo,
@@ -112,10 +123,13 @@
           onThemeToggle: toggleTheme,
           onUnlock: unlock,
           onStop: stopInspector,
-          onLayoutChange: updateLayout
+          onLayoutChange: updateLayout,
+          onToggleEdit: toggleEditing,
+          onEdit: applyEdit,
+          onResetEdits: resetEdits
         });
         panel.mount(css);
-        panel.setTheme(state.theme);
+        panel.setTheme(state.settings.theme);
         panel.setLocked(false);
         state.panel = panel;
         state.active = true;
@@ -142,6 +156,7 @@
     if (state.panel) state.panel.destroy();
     state.active = false;
     state.locked = false;
+    state.editing = false;
     state.panel = null;
     state.element = null;
     state.data = null;
@@ -149,6 +164,12 @@
     state.pendingTarget = null;
     state.frame = 0;
     notify(MESSAGES.INSPECTOR_STOPPED);
+  }
+
+  /** "Remove layers": close the inspector AND undo every live edit on the page. */
+  function removeLayers() {
+    stopInspector();
+    revertAllEdits();
   }
 
   /** Crosshair cursor while inspecting, done with a removable <style> so we never edit page elements. */
@@ -316,16 +337,19 @@
 
   /** Reads the element's typography and shows it in the panel. */
   function inspectElement(element) {
+    if (state.editing) leaveEditing();
     state.element = element;
     state.data = typography.getTypographyData(element);
     state.info = typography.describeElement(element);
+    state.panel.setCompact(!state.locked && !state.settings.showAllOnHover);
+    state.panel.setEdited(state.edits.has(element));
     renderPanel();
     state.panel.showPanel(true);
     updateLayout();
   }
 
   function renderPanel() {
-    state.panel.render({ data: state.data, element: state.info, colorFormat: state.colorFormat });
+    state.panel.render({ data: state.data, element: state.info, settings: state.settings });
   }
 
   function lock() {
@@ -333,6 +357,7 @@
     state.locked = true;
     state.info.selector = typography.generateSelector(state.element); // computed once, only when needed
     state.panel.setLocked(true);
+    state.panel.setCompact(false);
     renderPanel();
     updateLayout();
     state.panel.focus();
@@ -341,6 +366,7 @@
 
   function unlock() {
     if (!state.locked) return;
+    if (state.editing) leaveEditing();
     state.locked = false;
     stopWatching();
     state.panel.setLocked(false);
@@ -390,6 +416,80 @@
   }
 
   // ---------------------------------------------------------------------
+  // Live editing
+  // ---------------------------------------------------------------------
+  // Edits are written to the element's inline style (with !important, so they win over the
+  // page's own CSS). The original inline value is remembered so every change can be undone.
+
+  function toggleEditing() {
+    if (!state.locked || !state.element) return;
+    if (state.editing) {
+      leaveEditing();
+    } else {
+      state.editing = true;
+      state.panel.setEditing(true, state.data, state.settings.properties);
+    }
+    updateLayout();
+  }
+
+  function leaveEditing() {
+    state.editing = false;
+    if (state.panel) state.panel.setEditing(false);
+  }
+
+  /** Applies one new value. Returns false when the browser would not accept it. */
+  function applyEdit(property, value) {
+    const element = state.element;
+    const next = String(value).trim();
+    if (!element || !state.locked || !next || !CSS.supports(property, next)) return false;
+
+    let originals = state.edits.get(element);
+    if (!originals) {
+      originals = new Map();
+      state.edits.set(element, originals);
+    }
+    if (!originals.has(property)) {
+      originals.set(property, {
+        value: element.style.getPropertyValue(property),
+        priority: element.style.getPropertyPriority(property)
+      });
+    }
+    element.style.setProperty(property, next, 'important');
+
+    state.data = typography.getTypographyData(element);
+    renderPanel();
+    state.panel.setEdited(true);
+    updateLayout();
+    return true;
+  }
+
+  function revertElement(element) {
+    const originals = state.edits.get(element);
+    if (!originals) return;
+    for (const [property, original] of originals) {
+      if (original.value) element.style.setProperty(property, original.value, original.priority);
+      else element.style.removeProperty(property);
+    }
+    if (!element.getAttribute('style')) element.removeAttribute('style'); // leave no empty style="" behind
+    state.edits.delete(element);
+  }
+
+  function resetEdits() {
+    if (!state.element) return;
+    revertElement(state.element);
+    state.data = typography.getTypographyData(state.element);
+    renderPanel();
+    state.panel.setEdited(false);
+    if (state.editing) state.panel.setEditing(true, state.data, state.settings.properties);
+    updateLayout();
+    state.panel.toast('Edits reset');
+  }
+
+  function revertAllEdits() {
+    for (const element of Array.from(state.edits.keys())) revertElement(element);
+  }
+
+  // ---------------------------------------------------------------------
   // Panel actions
   // ---------------------------------------------------------------------
 
@@ -407,12 +507,15 @@
 
   function copyCSS() {
     if (!state.data) return;
-    copyAndReport(state.panel.buttons.copyCss, typography.buildCSS(state.data), 'CSS copied');
+    let css = typography.buildCSS(state.data, state.settings.properties);
+    if (state.settings.copyAsRule && state.info) css = typography.wrapRule(css, state.info.selector);
+    copyAndReport(state.panel.buttons.copyCss, css, 'CSS copied');
   }
 
   function copyFontInfo() {
     if (!state.data) return;
-    copyAndReport(state.panel.buttons.copyInfo, typography.buildInfo(state.data, state.info), 'Font info copied');
+    const info = typography.buildInfo(state.data, state.info, state.settings.properties);
+    copyAndReport(state.panel.buttons.copyInfo, info, 'Font info copied');
   }
 
   function copySelector() {
@@ -424,17 +527,12 @@
     if (text) copyAndReport(null, text, 'Color copied');
   }
 
-  function setColorFormat(format) {
-    state.colorFormat = format === 'rgb' ? 'rgb' : 'hex';
-    if (state.data) renderPanel();
-  }
-
   // ---------------------------------------------------------------------
   // Messages from the background service worker
   // ---------------------------------------------------------------------
 
   function respondWithStatus(sendResponse) {
-    sendResponse({ ok: true, active: state.active });
+    sendResponse({ ok: true, active: state.active, edited: state.edits.size > 0 });
   }
 
   function start(sendResponse) {
@@ -450,6 +548,10 @@
         return true; // answer asynchronously
       case MESSAGES.STOP_INSPECTOR:
         stopInspector();
+        respondWithStatus(sendResponse);
+        return false;
+      case MESSAGES.REMOVE_LAYERS:
+        removeLayers();
         respondWithStatus(sendResponse);
         return false;
       case MESSAGES.TOGGLE_INSPECTOR:

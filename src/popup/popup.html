@@ -31,26 +31,49 @@
 
     <section class="main">
       <button type="button" class="cta" id="toggle">Start Inspecting</button>
-      <p class="helper" id="helper">Hover over any text on the page to inspect its typography.</p>
+      <p class="helper" id="helper">Hover over any text to inspect it &middot; <span class="keys" id="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>F</kbd></span></p>
       <p class="error" id="error" role="alert" hidden></p>
     </section>
 
-    <section class="card shortcut">
-      <div>
-        <h2 class="card-title">Shortcut</h2>
-        <p class="card-note" id="shortcut-note">Toggle on any page.</p>
+    <section class="card" aria-labelledby="props-title">
+      <div class="card-head">
+        <h2 class="card-title" id="props-title">Show these properties</h2>
+        <span class="mini-actions">
+          <button type="button" class="link-btn" id="props-all">All</button>
+          <button type="button" class="link-btn" id="props-none">None</button>
+        </span>
       </div>
-      <div class="keys" id="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>F</kbd></div>
+      <div class="chips" id="chips"></div>
     </section>
 
-    <section class="card">
+    <section class="card switches">
+      <button type="button" class="switch-row" id="sw-showall" role="switch" aria-checked="true">
+        <span class="switch-label">Show all info on hover</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+      <button type="button" class="switch-row" id="sw-hex" role="switch" aria-checked="true">
+        <span class="switch-label">Show HEX value for color</span>
+        <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+      </button>
+    </section>
+
+    <section class="button-row">
+      <button type="button" class="btn btn-danger" id="remove-layers" title="Close the inspector and undo any live edits on this page" disabled>Remove layers</button>
+      <button type="button" class="btn" id="open-options">Options</button>
+    </section>
+
+    <button type="button" class="info-toggle" id="info-toggle" aria-expanded="false" aria-controls="info">Toggle extension info</button>
+
+    <section class="card info" id="info" hidden>
       <h2 class="card-title">How it works</h2>
       <ol class="steps">
         <li><span class="step-num">1</span>Start Inspector</li>
         <li><span class="step-num">2</span>Hover over text</li>
         <li><span class="step-num">3</span>Click to lock</li>
-        <li><span class="step-num">4</span>Copy CSS</li>
+        <li><span class="step-num">4</span>Copy or edit values</li>
       </ol>
+      <p class="info-note"><strong>Shortcut:</strong> <span id="shortcut-note"></span></p>
+      <p class="info-note">Everything runs on your computer. No tracking, no accounts. Version <span id="version"></span>.</p>
     </section>
 
     <footer class="footer">
@@ -61,6 +84,7 @@
 
   <script src="../shared/constants.js"></script>
   <script src="../shared/utils.js"></script>
+  <script src="../shared/settings.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
