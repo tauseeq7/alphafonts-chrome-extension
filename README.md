@@ -52,6 +52,10 @@ You do not need npm or any tools. Chrome can load the folder directly.
 
 The AlphaFonts icon now appears in the toolbar. Click the puzzle-piece icon and pin it if you do not see it.
 
+## Demo video
+
+[`video/`](video/) has a 70-second demo video (`alphafonts-font-inspector-demo.mp4`), a thumbnail, the YouTube title/description/tags (`youtube.md`) and an optional voiceover script (`script.md`).
+
 ## Opera, Edge and other Chromium browsers
 
 Opera, Edge, Brave and Vivaldi are built on Chromium, so the Chrome extension runs in them as it is. To load it for testing, open the browser's extensions page (`opera://extensions`, `edge://extensions`, ...), turn on Developer mode and use **Load unpacked**, exactly like Chrome.
