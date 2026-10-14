@@ -57,3 +57,19 @@ Which part would you like to see more of: the contrast checker, the page labels,
 - Add an end screen for the last 5 seconds (the closing card leaves room)
 - Captions: the video has on-screen text only. Add a voiceover (see `video/script.md`) for better watch time.
 - Music: add a track from the YouTube Audio Library (free and safe to use). Do not use copyrighted songs.
+
+---
+
+## YouTube Short (30 seconds, vertical 1080x1920)
+
+File: `alphafonts-font-inspector-short.mp4`
+
+**Title:** Find ANY website's font in 1 click #Shorts
+
+**Description:**
+Find the font, size, weight, color and CSS of any text on any website, free and private.
+AlphaFonts Font Inspector: hover to inspect, click to lock, copy the CSS, check contrast, label every text on the page.
+Get it: https://alphafonts.com
+Works on Chrome, Firefox, Opera and Edge. No account, no tracking.
+
+#Shorts #webdesign #fonts #typography #chromeextension #webdevelopment
