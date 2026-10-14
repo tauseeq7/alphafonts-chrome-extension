@@ -8,7 +8,11 @@
  *  - relay popup requests to the page and report problems clearly
  *  - show a small "ON" badge while the inspector is running
  */
-importScripts('../shared/constants.js', '../shared/utils.js', '../shared/settings.js');
+// Chrome runs this file as a service worker and loads helpers with importScripts.
+// Firefox runs it as a background page and loads the same helpers from its manifest instead.
+if (typeof importScripts === 'function') {
+  importScripts('../shared/constants.js', '../shared/utils.js', '../shared/settings.js');
+}
 
 const { MESSAGES, ERRORS, COMMAND_TOGGLE } = self.AlphaFonts.constants;
 const { isRestrictedUrl } = self.AlphaFonts.utils;

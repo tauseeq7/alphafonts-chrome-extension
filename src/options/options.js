@@ -59,7 +59,13 @@
       settings = await store.reset();
       render();
     });
-    $('change-shortcut').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
+    if (window.AlphaFonts.utils.isFirefox()) {
+      // Firefox does not let extensions open its shortcut page, so show where to find it.
+      $('change-shortcut').hidden = true;
+      $('shortcut-help').hidden = false;
+    } else {
+      $('change-shortcut').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
+    }
     $('version').textContent = chrome.runtime.getManifest().version;
 
     try {

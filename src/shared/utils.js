@@ -272,7 +272,13 @@
     return SYSTEM_FAMILIES.includes(String(name).toLowerCase());
   }
 
+  /** True when running in Firefox (it has no page for changing shortcuts that extensions may open). */
+  function isFirefox() {
+    return typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
+  }
+
   root.AlphaFonts.utils = {
+    isFirefox,
     isRestrictedUrl,
     parseColor,
     toHex,

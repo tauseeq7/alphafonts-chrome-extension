@@ -185,3 +185,39 @@ test('contrast math matches WCAG reference values', () => {
   assert.ok(!onDark.aa && utils.contrastRatio(c(onDark.suggestion), c('#111111')) >= 4.5);
   assert.deepStrictEqual({ ...utils.blend({ r: 255, g: 0, b: 0, a: 0.5 }, { r: 0, g: 0, b: 255, a: 1 }) }, { r: 128, g: 0, b: 128, a: 1 });
 });
+
+test('isFirefox detects the browser from the user agent', () => {
+  const make = (userAgent) => {
+    const sandbox = { URL, navigator: { userAgent } };
+    sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+    for (const file of ['src/shared/constants.js', 'src/shared/utils.js']) {
+      vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), sandbox, { filename: file });
+    }
+    return sandbox.AlphaFonts.utils.isFirefox();
+  };
+  assert.strictEqual(make('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0'), true);
+  assert.strictEqual(make('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/147.0 Safari/537.36'), false);
+});
+
+test('the Firefox package keeps every file the Chrome extension needs', () => {
+  const { execFileSync } = require('node:child_process');
+  execFileSync(process.execPath, [path.join(__dirname, '..', 'firefox', 'package.js')], { stdio: 'pipe' });
+  const version = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'manifest.json'), 'utf8')).version;
+  const zip = fs.readFileSync(path.join(__dirname, '..', 'releases', 'alphafonts-font-inspector-' + version + '-firefox.zip'));
+  // Read the file list from the zip's central directory (the index at the end of the file).
+  const endAt = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  let pos = zip.readUInt32LE(endAt + 16);
+  const names = [];
+  while (zip.readUInt32LE(pos) === 0x02014b50) {
+    const nameLength = zip.readUInt16LE(pos + 28);
+    names.push(zip.toString('utf8', pos + 46, pos + 46 + nameLength));
+    pos += 46 + nameLength + zip.readUInt16LE(pos + 30) + zip.readUInt16LE(pos + 32);
+  }
+  for (const name of ['manifest.json', 'src/background/background.js', 'src/content/labels.js', 'src/popup/popup.html', 'src/options/options.html', 'src/icons/icon128.png']) {
+    assert.ok(names.includes(name), name + ' is in the zip');
+  }
+  assert.ok(names.every((name) => !name.includes('\\')), 'no backslashes in zip paths (Windows zips are rejected by AMO)');
+  assert.ok(names.every((name) => !name.startsWith('tests/') && !name.startsWith('screenshots/')), 'tests and screenshots are left out');
+  assert.ok(names.length >= 20);
+});

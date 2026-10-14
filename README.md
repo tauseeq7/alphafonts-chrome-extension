@@ -52,6 +52,20 @@ You do not need npm or any tools. Chrome can load the folder directly.
 
 The AlphaFonts icon now appears in the toolbar. Click the puzzle-piece icon and pin it if you do not see it.
 
+## Firefox
+
+The same code runs in Firefox 142 or newer. Firefox needs a slightly different manifest, so the Firefox package is built from the Chrome files by one small script (nothing to install except Node.js):
+
+```
+node firefox/package.js
+```
+
+This creates `releases/alphafonts-font-inspector-<version>-firefox.zip`.
+
+- **Try it in Firefox:** open `about:debugging`, click **This Firefox**, then **Load Temporary Add-on...** and pick that zip (or the `manifest.json` of the unzipped folder). Temporary add-ons disappear when Firefox closes.
+- **Publish it:** upload the zip at <https://addons.mozilla.org/developers/>. Ready-to-paste listing text, privacy policy and reviewer notes are in [`firefox/LISTING.md`](firefox/LISTING.md).
+- **Differences:** Firefox cannot open its shortcut settings from an extension, so the popup tells you where to find them (Add-ons Manager, gear icon, **Manage Extension Shortcuts**).
+
 ## Usage
 
 1. Open any normal website and click the **AlphaFonts** icon.
@@ -164,6 +178,8 @@ src/content/             The inspector that runs inside webpages
   inspector.css          Styles for the panel
 src/popup/               The toolbar popup
 src/options/             The options page
+firefox/                 Firefox package builder and addons.mozilla.org listing text
+releases/                Built packages (Firefox zip)
 src/shared/              Constants, settings storage, helpers (colors, font stacks, restricted URLs)
 src/icons/               Extension icons
 tests/                   Unit tests for the pure helpers

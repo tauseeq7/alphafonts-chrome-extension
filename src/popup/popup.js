@@ -181,6 +181,11 @@
       shortcutKeys.append('no shortcut set');
       shortcutNote.append('Not set. ');
     }
+    if (window.AlphaFonts.utils.isFirefox()) {
+      // Firefox does not let extensions open its shortcut page, so explain where it is.
+      shortcutNote.append('Change it in the Add-ons Manager: gear icon, then Manage Extension Shortcuts.');
+      return;
+    }
     const link = document.createElement('a');
     link.href = '#';
     link.textContent = 'Change shortcut';
