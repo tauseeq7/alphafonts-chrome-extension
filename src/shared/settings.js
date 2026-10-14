@@ -24,10 +24,28 @@
     { key: 'textDecoration', label: 'Text decoration' }
   ];
 
+  // Properties shown on the page-wide labels ("Label all text"). Kept short by default
+  // so the labels stay readable; the person can switch more on.
+  const DEFAULT_LABEL_PROPERTIES = ['fontFamily', 'fontSize', 'fontWeight'];
+
   function defaults() {
     const properties = {};
-    for (const p of PROPERTIES) properties[p.key] = true;
-    return { theme: 'dark', colorFormat: 'hex', showAllOnHover: true, copyAsRule: false, contextMenu: true, properties };
+    const labelProperties = {};
+    for (const p of PROPERTIES) {
+      properties[p.key] = true;
+      labelProperties[p.key] = DEFAULT_LABEL_PROPERTIES.includes(p.key);
+    }
+    return { theme: 'dark', colorFormat: 'hex', showAllOnHover: true, copyAsRule: false, contextMenu: true, properties, labelProperties };
+  }
+
+  /** Merges a saved on/off map with the defaults so every known key has a true/false value. */
+  function normalizeMap(saved, fallback) {
+    const result = {};
+    for (const p of PROPERTIES) {
+      const value = saved && saved[p.key];
+      result[p.key] = typeof value === 'boolean' ? value : fallback[p.key];
+    }
+    return result;
   }
 
   /** Turns whatever is in storage into a complete, valid settings object. */
@@ -35,18 +53,14 @@
     const base = defaults();
     const saved = raw && typeof raw === 'object' ? raw : {};
     const theme = saved.theme === 'light' || saved.theme === 'dark' ? saved.theme : legacyTheme === 'light' ? 'light' : 'dark';
-    const properties = {};
-    for (const p of PROPERTIES) {
-      const value = saved.properties && saved.properties[p.key];
-      properties[p.key] = typeof value === 'boolean' ? value : base.properties[p.key];
-    }
     return {
       theme,
       colorFormat: saved.colorFormat === 'rgb' ? 'rgb' : 'hex',
       showAllOnHover: saved.showAllOnHover !== false,
       copyAsRule: saved.copyAsRule === true,
       contextMenu: saved.contextMenu !== false,
-      properties
+      properties: normalizeMap(saved.properties, base.properties),
+      labelProperties: normalizeMap(saved.labelProperties, base.labelProperties)
     };
   }
 
@@ -62,7 +76,12 @@
   /** Saves part of the settings, e.g. save({ theme: 'light' }) or save({ properties: { fontSize: false } }). */
   async function save(patch) {
     const current = await load();
-    const next = normalize({ ...current, ...patch, properties: { ...current.properties, ...(patch.properties || {}) } });
+    const next = normalize({
+      ...current,
+      ...patch,
+      properties: { ...current.properties, ...(patch.properties || {}) },
+      labelProperties: { ...current.labelProperties, ...(patch.labelProperties || {}) }
+    });
     try {
       await chrome.storage.local.set({ [STORAGE_KEY]: next });
     } catch (e) {

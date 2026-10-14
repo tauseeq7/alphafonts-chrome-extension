@@ -21,6 +21,7 @@
       STOP_INSPECTOR: 'STOP_INSPECTOR',
       TOGGLE_INSPECTOR: 'TOGGLE_INSPECTOR',
       REMOVE_LAYERS: 'REMOVE_LAYERS',
+      SET_LABELS: 'SET_LABELS', // { on: true | false }: label every text element on the page
       GET_STATUS: 'GET_STATUS',
       // Notifications (content script -> background)
       INSPECTOR_STARTED: 'INSPECTOR_STARTED',

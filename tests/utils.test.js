@@ -122,3 +122,41 @@ test('settings are always complete and valid, and old theme-only data still work
   assert.strictEqual(custom.properties.fontFamily, true);
   assert.strictEqual('bogus' in custom.properties, false);
 });
+
+test('labels show only noteworthy values, with short names', () => {
+  const AF = load('src/shared/constants.js', 'src/shared/utils.js', 'src/shared/settings.js', 'src/content/typography.js', 'src/content/labels.js');
+  const none = Object.fromEntries(AF.settings.PROPERTIES.map((p) => [p.key, false]));
+  const on = (...keys) => ({ ...none, ...Object.fromEntries(keys.map((k) => [k, true])) });
+  const data = {
+    fontFamily: '"Open Sans", Arial, sans-serif', fontSize: '18px', fontWeight: '700', fontStyle: 'normal',
+    lineHeight: '28px', letterSpacing: 'normal', wordSpacing: '0px', textAlign: 'start', textTransform: 'none',
+    textDecorationLine: 'none', color: 'rgb(34, 34, 34)'
+  };
+  const text = (enabled, fmt = 'hex', d = data) => Array.from(AF.labelParts(d, enabled, fmt)).map((p) => p.text);
+  assert.deepStrictEqual(text(on('fontFamily', 'fontSize', 'fontWeight')), ['Open Sans', '18px', '700']);
+  assert.deepStrictEqual(text(on('fontColor')), ['#222222']);
+  assert.deepStrictEqual(text(on('fontColor'), 'rgb'), ['rgb(34, 34, 34)']);
+  assert.deepStrictEqual(text(on('lineHeight')), ['lh 28px']);
+  // browser defaults are left out
+  assert.deepStrictEqual(text(on('fontStyle', 'letterSpacing', 'wordSpacing', 'textAlign', 'textTransform', 'textDecoration')), []);
+  const fancy = { ...data, fontStyle: 'italic', letterSpacing: '0.5px', textAlign: 'center', textTransform: 'uppercase', textDecorationLine: 'underline' };
+  assert.deepStrictEqual(
+    text(on('fontStyle', 'letterSpacing', 'textAlign', 'textTransform', 'textDecoration'), 'hex', fancy),
+    ['italic', 'ls 0.5px', 'center', 'uppercase', 'underline']
+  );
+  // long family names are shortened; transparent colors keep their alpha
+  assert.ok(text(on('fontFamily'), 'hex', { ...data, fontFamily: 'A Really Very Long Font Family Name' })[0].endsWith('…'));
+  assert.deepStrictEqual(text(on('fontColor'), 'hex', { ...data, color: 'rgba(0, 0, 0, 0.5)' }), ['rgba(0, 0, 0, 0.5)']);
+});
+
+test('label settings: separate from panel settings, short by default', () => {
+  const { settings } = load('src/shared/constants.js', 'src/shared/settings.js');
+  const fresh = settings.normalize(undefined);
+  const labelOn = Object.keys(fresh.labelProperties).filter((k) => fresh.labelProperties[k]);
+  assert.deepStrictEqual(labelOn.sort(), ['fontFamily', 'fontSize', 'fontWeight']);
+  assert.ok(Object.values(fresh.properties).every(Boolean));
+  const custom = settings.normalize({ labelProperties: { fontColor: true, fontSize: false } });
+  assert.strictEqual(custom.labelProperties.fontColor, true);
+  assert.strictEqual(custom.labelProperties.fontSize, false);
+  assert.strictEqual(custom.labelProperties.fontWeight, true);
+});

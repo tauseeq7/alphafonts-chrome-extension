@@ -42,6 +42,18 @@
     </section>
 
     <section class="card">
+      <div class="card-head">
+        <h2>Page labels</h2>
+        <span class="mini-actions">
+          <button type="button" class="link-btn" id="label-props-all">All</button>
+          <button type="button" class="link-btn" id="label-props-none">None</button>
+        </span>
+      </div>
+      <p class="muted">The popup's <strong>Label all text on page</strong> button puts a small label above every text element. Choose what the labels show. Settings that are just the browser default (normal style, no spacing, left aligned) are left out to keep labels short. Abbreviations: <code>lh</code> line height, <code>ls</code> letter spacing, <code>ws</code> word spacing.</p>
+      <div class="checks" id="label-props"></div>
+    </section>
+
+    <section class="card">
       <h2>Behavior</h2>
       <label class="check"><input type="checkbox" id="showAllOnHover"> <span><strong>Show all info on hover</strong><small>Off = hovering shows a small card with only your checked properties. Clicking a text always opens the full panel.</small></span></label>
       <label class="check"><input type="checkbox" id="hex"> <span><strong>Show HEX value for color</strong><small>Off = show RGB. Transparent colors always show as rgba().</small></span></label>

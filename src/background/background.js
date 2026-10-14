@@ -22,6 +22,7 @@ const CONTENT_FILES = [
   'src/shared/settings.js',
   'src/content/typography.js',
   'src/content/panel.js',
+  'src/content/labels.js',
   'src/content/content.js'
 ];
 
@@ -95,6 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case MESSAGES.STOP_INSPECTOR:
     case MESSAGES.TOGGLE_INSPECTOR:
     case MESSAGES.REMOVE_LAYERS:
+    case MESSAGES.SET_LABELS:
     case MESSAGES.GET_STATUS:
       handlePopupRequest(message).then(sendResponse);
       return true;
@@ -129,7 +131,7 @@ async function handlePopupRequest(message) {
     const tab = await chrome.tabs.get(message.tabId);
     if (message.type === MESSAGES.GET_STATUS) return await getStatus(tab);
     if (message.type === MESSAGES.REMOVE_LAYERS) return await removeLayers(tab);
-    return await sendToTab(tab, message.type);
+    return await sendToTab(tab, message.type, message.type === MESSAGES.SET_LABELS ? { on: message.on === true } : {});
   } catch (e) {
     return { ok: false, error: ERRORS.START_FAILED };
   }
@@ -144,7 +146,7 @@ async function getStatus(tab) {
   if (isRestrictedUrl(tab.url)) return { ok: false, error: ERRORS.RESTRICTED_PAGE };
   try {
     const reply = await chrome.tabs.sendMessage(tab.id, { type: MESSAGES.GET_STATUS });
-    return { ok: true, active: !!(reply && reply.active), edited: !!(reply && reply.edited) };
+    return { ok: true, active: !!(reply && reply.active), edited: !!(reply && reply.edited), labels: !!(reply && reply.labels) };
   } catch (e) {
     // Not injected yet: that is normal. But Chrome hides the URL of some pages
     // (e.g. chrome://), so if we cannot read it, check that scripts are allowed here.
@@ -158,7 +160,7 @@ async function removeLayers(tab) {
   try {
     return await chrome.tabs.sendMessage(tab.id, { type: MESSAGES.REMOVE_LAYERS });
   } catch (e) {
-    return { ok: true, active: false, edited: false };
+    return { ok: true, active: false, edited: false, labels: false };
   }
 }
 
@@ -173,11 +175,11 @@ async function canRunScripts(tabId) {
 }
 
 /** Sends a command to the page, injecting the inspector first if it is not there yet. */
-async function sendToTab(tab, type) {
+async function sendToTab(tab, type, extra = {}) {
   if (isRestrictedUrl(tab.url)) return { ok: false, error: ERRORS.RESTRICTED_PAGE };
 
   try {
-    return await chrome.tabs.sendMessage(tab.id, { type });
+    return await chrome.tabs.sendMessage(tab.id, { type, ...extra });
   } catch (e) {
     // No inspector in the page yet: inject it below.
   }
@@ -189,7 +191,7 @@ async function sendToTab(tab, type) {
   }
 
   try {
-    const reply = await chrome.tabs.sendMessage(tab.id, { type });
+    const reply = await chrome.tabs.sendMessage(tab.id, { type, ...extra });
     return reply || { ok: false, error: ERRORS.START_FAILED };
   } catch (e) {
     return { ok: false, error: ERRORS.START_FAILED };

@@ -92,6 +92,36 @@
     }
   }
 
+  const SKIPPED_TAGS = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE'];
+
+  /** True if the element directly contains text worth inspecting (not just child elements). */
+  function hasOwnText(element) {
+    if (SKIPPED_TAGS.includes(element.tagName)) return false;
+    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+      return !!(element.value || element.placeholder);
+    }
+    if (element.tagName === 'SELECT') return true;
+    for (const node of element.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE && /\S/.test(node.nodeValue)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * A cheap version of getTypographyData for the page-wide labels: computed styles only,
+   * no font detection, because it runs for hundreds of elements at once.
+   */
+  function getLabelData(element) {
+    const data = {};
+    try {
+      const style = window.getComputedStyle(element);
+      for (const key of Object.keys(PROPERTIES)) data[key] = readProperty(style, PROPERTIES[key]);
+    } catch (e) {
+      // Leave the values empty: the label simply shows less.
+    }
+    return data;
+  }
+
   // ---------------------------------------------------------------------
   // "Likely rendered font"
   // ---------------------------------------------------------------------
@@ -368,6 +398,8 @@
 
   AF.typography = {
     getTypographyData,
+    getLabelData,
+    hasOwnText,
     detectRenderedFont,
     buildCSS,
     wrapRule,

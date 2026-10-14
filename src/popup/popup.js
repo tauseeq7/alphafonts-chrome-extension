@@ -24,6 +24,8 @@
   let currentTab = null;
   let inspecting = false;
   let settings = store.defaults();
+  let mode = 'panel'; // which property list the checkboxes edit: 'panel' or 'labels'
+  let labelsOn = false;
 
   // ----- Theme -----
 
@@ -59,11 +61,23 @@
     themeToggle.title = label;
     themeToggle.replaceChildren(themeIcon(light ? 'light' : 'dark'));
 
+    const chosen = currentMap();
     for (const chip of chipsBox.children) {
-      chip.setAttribute('aria-pressed', String(settings.properties[chip.dataset.key]));
+      chip.setAttribute('aria-pressed', String(chosen[chip.dataset.key]));
     }
+    $('mode-panel').setAttribute('aria-pressed', String(mode === 'panel'));
+    $('mode-labels').setAttribute('aria-pressed', String(mode === 'labels'));
     $('sw-showall').setAttribute('aria-checked', String(settings.showAllOnHover));
     $('sw-hex').setAttribute('aria-checked', String(settings.colorFormat === 'hex'));
+  }
+
+  /** The on/off map the checkboxes are currently editing. */
+  function currentMap() {
+    return mode === 'labels' ? settings.labelProperties : settings.properties;
+  }
+
+  function mapPatch(map) {
+    return mode === 'labels' ? { labelProperties: map } : { properties: map };
   }
 
   function buildChips() {
@@ -76,20 +90,25 @@
       box.className = 'chip-box';
       box.setAttribute('aria-hidden', 'true');
       chip.append(box, label);
-      chip.addEventListener('click', () => update({ properties: { [key]: !settings.properties[key] } }));
+      chip.addEventListener('click', () => update(mapPatch({ [key]: !currentMap()[key] })));
       chipsBox.append(chip);
     }
   }
 
   function setAllProperties(value) {
-    const properties = {};
-    for (const { key } of store.PROPERTIES) properties[key] = value;
-    update({ properties });
+    const map = {};
+    for (const { key } of store.PROPERTIES) map[key] = value;
+    update(mapPatch(map));
   }
 
   /** Shows the change right away, then saves it (the in-page panel updates from storage). */
   async function update(patch) {
-    settings = store.normalize({ ...settings, ...patch, properties: { ...settings.properties, ...(patch.properties || {}) } });
+    settings = store.normalize({
+      ...settings,
+      ...patch,
+      properties: { ...settings.properties, ...(patch.properties || {}) },
+      labelProperties: { ...settings.labelProperties, ...(patch.labelProperties || {}) }
+    });
     renderSettings();
     settings = await store.save(patch);
     renderSettings();
@@ -107,15 +126,20 @@
     errorBox.hidden = !text;
   }
 
-  function renderState({ active, edited }) {
+  function renderState({ active, edited, labels }) {
     inspecting = !!active;
+    labelsOn = !!labels;
+    const labelsButton = $('labels-toggle');
+    labelsButton.disabled = false;
+    labelsButton.setAttribute('aria-pressed', String(labelsOn));
+    labelsButton.textContent = labelsOn ? 'Hide labels' : 'Label all text on page';
     setStatus('ready', active ? 'Inspecting' : 'Ready');
     toggleButton.disabled = false;
     toggleButton.textContent = active ? 'Stop Inspecting' : 'Start Inspecting';
     if (active) toggleButton.setAttribute('data-mode', 'stop');
     else toggleButton.removeAttribute('data-mode');
     helper.hidden = false;
-    removeButton.disabled = !(active || edited);
+    removeButton.disabled = !(active || edited || labels);
   }
 
   function renderUnavailable(errorCode) {
@@ -124,6 +148,7 @@
     toggleButton.disabled = true;
     toggleButton.textContent = 'Start Inspecting';
     removeButton.disabled = true;
+    $('labels-toggle').disabled = true;
     helper.hidden = true;
     showError(ERROR_TEXT[errorCode] || ERROR_TEXT[ERRORS.RESTRICTED_PAGE]);
   }
@@ -168,9 +193,9 @@
 
   // ----- Talking to the background -----
 
-  async function request(type) {
+  async function request(type, extra) {
     try {
-      const reply = await chrome.runtime.sendMessage({ type, tabId: currentTab.id });
+      const reply = await chrome.runtime.sendMessage({ type, tabId: currentTab.id, ...extra });
       return reply || { ok: false, error: ERRORS.START_FAILED };
     } catch (e) {
       return { ok: false, error: ERRORS.START_FAILED };
@@ -183,7 +208,7 @@
     const reply = await request(inspecting ? MESSAGES.STOP_INSPECTOR : MESSAGES.START_INSPECTOR);
     if (!reply.ok) {
       if (reply.error === ERRORS.RESTRICTED_PAGE) return renderUnavailable(reply.error);
-      renderState({ active: false });
+      renderState({ active: false, labels: labelsOn });
       return showError(ERROR_TEXT[reply.error] || ERROR_TEXT[ERRORS.START_FAILED]);
     }
     if (reply.active) {
@@ -193,10 +218,22 @@
     }
   }
 
+  async function onLabelsClick() {
+    showError('');
+    $('labels-toggle').disabled = true;
+    const reply = await request(MESSAGES.SET_LABELS, { on: !labelsOn });
+    if (!reply.ok) {
+      if (reply.error === ERRORS.RESTRICTED_PAGE) return renderUnavailable(reply.error);
+      renderState({ active: inspecting, labels: labelsOn });
+      return showError(ERROR_TEXT[reply.error] || ERROR_TEXT[ERRORS.START_FAILED]);
+    }
+    renderState(reply); // the popup stays open so properties can be changed while watching the page
+  }
+
   async function onRemoveLayers() {
     removeButton.disabled = true;
     const reply = await request(MESSAGES.REMOVE_LAYERS);
-    renderState(reply.ok ? reply : { active: false });
+    renderState(reply.ok ? reply : { active: false, labels: false });
   }
 
   async function init() {
@@ -222,6 +259,9 @@
     });
     toggleButton.addEventListener('click', onToggleClick);
     removeButton.addEventListener('click', onRemoveLayers);
+    $('labels-toggle').addEventListener('click', onLabelsClick);
+    $('mode-panel').addEventListener('click', () => { mode = 'panel'; renderSettings(); });
+    $('mode-labels').addEventListener('click', () => { mode = 'labels'; renderSettings(); });
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     currentTab = tab;

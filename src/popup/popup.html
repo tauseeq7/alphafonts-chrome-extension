@@ -32,6 +32,7 @@
 
     <section class="main">
       <button type="button" class="cta" id="toggle">Start Inspecting</button>
+      <button type="button" class="btn btn-wide" id="labels-toggle" aria-pressed="false" title="Put a small label on every text element on the page">Label all text on page</button>
       <p class="helper" id="helper">Hover over any text to inspect it &middot; <span class="keys" id="shortcut-keys"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>F</kbd></span></p>
       <p class="error" id="error" role="alert" hidden></p>
     </section>
@@ -43,6 +44,10 @@
           <button type="button" class="link-btn" id="props-all">All</button>
           <button type="button" class="link-btn" id="props-none">None</button>
         </span>
+      </div>
+      <div class="segmented" role="group" aria-label="Where the properties are shown">
+        <button type="button" id="mode-panel" aria-pressed="true">In the panel</button>
+        <button type="button" id="mode-labels" aria-pressed="false">On page labels</button>
       </div>
       <div class="chips" id="chips"></div>
     </section>

@@ -14,11 +14,11 @@
   const { MESSAGES, ERRORS } = AF.constants;
   const typography = AF.typography;
   const settingsStore = AF.settings;
+  const labels = AF.createLabels();
 
   const CURSOR_STYLE_ID = 'alphafonts-inspector-cursor';
   // Mouse events we swallow while inspecting, so clicks never reach the page's own handlers.
   const BLOCKED_EVENTS = ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'dblclick', 'auxclick'];
-  const SKIPPED_TAGS = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE'];
   const WATCH_INTERVAL_MS = 400;
 
   const state = {
@@ -166,10 +166,22 @@
     notify(MESSAGES.INSPECTOR_STOPPED);
   }
 
-  /** "Remove layers": close the inspector AND undo every live edit on the page. */
+  /** "Remove layers": close the inspector, hide all labels AND undo every live edit on the page. */
   function removeLayers() {
     stopInspector();
+    labels.stop();
     revertAllEdits();
+  }
+
+  // ---------------------------------------------------------------------
+  // Page-wide labels ("Label all text")
+  // ---------------------------------------------------------------------
+
+  async function setLabels(on) {
+    if (!on) return labels.stop();
+    if (labels.isActive()) return;
+    const css = await loadPanelStyles();
+    labels.start(css, await settingsStore.load());
   }
 
   /** Crosshair cursor while inspecting, done with a removable <style> so we never edit page elements. */
@@ -316,19 +328,7 @@
   function findInspectable(target) {
     if (target && target.nodeType !== 1) target = target.parentElement;
     if (!target || (state.panel && state.panel.owns(target))) return null;
-    return hasOwnText(target) ? target : null;
-  }
-
-  function hasOwnText(element) {
-    if (SKIPPED_TAGS.includes(element.tagName)) return false;
-    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-      return !!(element.value || element.placeholder);
-    }
-    if (element.tagName === 'SELECT') return true;
-    for (const node of element.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE && /\S/.test(node.nodeValue)) return true;
-    }
-    return false;
+    return typography.hasOwnText(target) ? target : null;
   }
 
   // ---------------------------------------------------------------------
@@ -460,6 +460,7 @@
     renderPanel();
     state.panel.setEdited(true);
     updateLayout();
+    labels.refresh();
     return true;
   }
 
@@ -482,11 +483,13 @@
     state.panel.setEdited(false);
     if (state.editing) state.panel.setEditing(true, state.data, state.settings.properties);
     updateLayout();
+    labels.refresh();
     state.panel.toast('Edits reset');
   }
 
   function revertAllEdits() {
     for (const element of Array.from(state.edits.keys())) revertElement(element);
+    labels.refresh();
   }
 
   // ---------------------------------------------------------------------
@@ -532,7 +535,7 @@
   // ---------------------------------------------------------------------
 
   function respondWithStatus(sendResponse) {
-    sendResponse({ ok: true, active: state.active, edited: state.edits.size > 0 });
+    sendResponse({ ok: true, active: state.active, edited: state.edits.size > 0, labels: labels.isActive() });
   }
 
   function start(sendResponse) {
@@ -550,6 +553,11 @@
         stopInspector();
         respondWithStatus(sendResponse);
         return false;
+      case MESSAGES.SET_LABELS:
+        setLabels(message.on === true)
+          .then(() => respondWithStatus(sendResponse))
+          .catch(() => sendResponse({ ok: false, error: ERRORS.START_FAILED }));
+        return true; // answer asynchronously
       case MESSAGES.REMOVE_LAYERS:
         removeLayers();
         respondWithStatus(sendResponse);

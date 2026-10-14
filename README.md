@@ -4,10 +4,11 @@
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 2.3.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.4.0 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
+![Page labels](screenshots/page-labels.png)
 ![Live editing](screenshots/inspector-edit.png)
 
 ## Features
@@ -22,6 +23,7 @@ Made by [AlphaFonts](https://alphafonts.com). Version 2.3.0 for Google Chrome (M
 - **Click-to-lock** - freeze the panel so you can move the mouse and press buttons.
 - **Keyboard shortcut** - `Alt + Shift + F` toggles the inspector.
 - **Right-click inspection** - right-click a page, then choose **AlphaFonts > Inspect Font**.
+- **Label all text on the page** - one click puts a small label above every text element (font, size, weight by default). Pick what labels show with the **On page labels** switch in the popup. Labels sit above the text instead of on top of it, move out of each other's way, never block clicks, follow scrolling, and update when the page changes. **Hide labels** or **Remove layers** takes them away.
 - **Choose your properties** - 11 checkboxes (font family, size, weight, style, color, line height, letter spacing, word spacing, text align, text transform, text decoration). Only the checked ones appear in the panel, in Copy CSS and in Copy Info.
 - **Show all info on hover** - on: hover shows the full panel; off: hover shows a small card with just your chosen properties.
 - **HEX or RGB colors** - one switch in the popup (also in Options and in the panel).
@@ -84,6 +86,7 @@ Being honest about what V1 cannot do:
 - **Iframes.** Only the main page is inspected. Text inside an iframe (especially from another website, such as embedded videos or payment forms) cannot be inspected and is ignored without errors. When the pointer moves into an iframe, the last highlight may stay visible until you click or move back onto the page.
 - **Shadow DOM.** Text inside *open* shadow roots is inspected. Text inside *closed* shadow roots is reported as the host element at best.
 - **Rendered font is a guess.** Browsers do not tell pages which font file was drawn. The "likely rendered" line compares text widths to find the first available font. It cannot detect per-character fallbacks, and it stays hidden when the stack starts with a system font.
+- **Labels** cover text in the main page (not inside iframes or closed shadow roots), show at most 400 labels at a time (the ones on screen), and read styles when the page changes, so a style change from a hover effect may not show until the next page update.
 - **Live edits are temporary.** They change the page only in your browser, are not saved, and disappear on reload. Edits are written as inline `!important` styles, so they win over the site's CSS.
 - **PDFs and some special viewers** (such as Chrome's built-in PDF viewer) do not allow extensions.
 - **Wide-gamut colors.** Colors written as `lab()`, `oklch()`, and similar are shown exactly as the browser reports them, without a HEX conversion.
@@ -109,7 +112,13 @@ Permissions used, and why:
 | `contextMenus` | Adds the **AlphaFonts > Inspect Font** right-click item. |
 | `storage` | Saves your settings (theme, chosen properties, switches) on your own computer. Nothing else is stored. |
 
-## What's new in 2.3
+## What's new in 2.4
+
+- **Label all text on page**: a page-wide view of fonts. Labels show the properties you choose (default: font family, size, weight), skip browser-default values to stay short, and use `lh`, `ls`, `ws` for line height, letter spacing and word spacing.
+- Separate property lists for the panel and for the page labels (popup and Options).
+- **Remove layers** now also clears the labels.
+
+## What was new in 2.3
 
 - New option to turn the right-click menu (**AlphaFonts > Inspect Font**) on or off. The toolbar button and shortcut always work.
 
@@ -140,6 +149,7 @@ src/content/             The inspector that runs inside webpages
   content.js             Start/stop, mouse and keyboard events, lock, copy actions
   typography.js          Reads computed styles, builds CSS/info text, selectors
   panel.js               Highlight box, floating panel, toast (inside a Shadow DOM)
+  labels.js              Page-wide labels ("Label all text")
   inspector.css          Styles for the panel
 src/popup/               The toolbar popup
 src/options/             The options page

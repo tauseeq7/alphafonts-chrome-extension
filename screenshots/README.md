@@ -3,6 +3,7 @@
 | File | Shows |
 | --- | --- |
 | `logo.png` | The AlphaFonts logo |
+| `page-labels.png` | "Label all text": a label above every text element |
 | `popup.png` | The popup: property toggles, switches, Remove layers, Options, extension info |
 | `inspector-edit.png` | Edit mode: change values live on the page |
 | `inspector-compact.png` | Compact hover card ("Show all info on hover" off) |

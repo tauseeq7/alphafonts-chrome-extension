@@ -504,3 +504,44 @@ a:focus-visible {
 .info-note a {
   color: var(--accent-text);
 }
+
+/* ---------- Version 2.4 additions ---------- */
+
+.btn-wide {
+  width: 100%;
+}
+
+.btn[aria-pressed='true'] {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented button {
+  padding: 6px 8px;
+  color: var(--text-2);
+  background: var(--bg);
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button[aria-pressed='true'] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
