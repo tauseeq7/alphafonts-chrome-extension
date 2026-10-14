@@ -8,7 +8,7 @@
  *  - relay popup requests to the page and report problems clearly
  *  - show a small "ON" badge while the inspector is running
  */
-importScripts('../shared/constants.js', '../shared/utils.js');
+importScripts('../shared/constants.js', '../shared/utils.js', '../shared/settings.js');
 
 const { MESSAGES, ERRORS, COMMAND_TOGGLE } = self.AlphaFonts.constants;
 const { isRestrictedUrl } = self.AlphaFonts.utils;
@@ -29,16 +29,41 @@ const CONTENT_FILES = [
 // Right-click menu:  AlphaFonts > Inspect Font
 // ---------------------------------------------------------------------
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: MENU_PARENT_ID, title: 'AlphaFonts', contexts: ['all'] });
-    chrome.contextMenus.create({
-      id: MENU_INSPECT_ID,
-      parentId: MENU_PARENT_ID,
-      title: 'Inspect Font',
-      contexts: ['all']
+/**
+ * Makes the right-click menu match the "Use the right-click menu" setting.
+ * Safe to call any time: it always clears the old menu first.
+ */
+function syncContextMenu(enabled) {
+  return new Promise((resolve) => {
+    chrome.contextMenus.removeAll(() => {
+      void chrome.runtime.lastError;
+      if (!enabled) return resolve(false);
+      chrome.contextMenus.create({ id: MENU_PARENT_ID, title: 'AlphaFonts', contexts: ['all'] }, () => {
+        void chrome.runtime.lastError;
+        chrome.contextMenus.create(
+          { id: MENU_INSPECT_ID, parentId: MENU_PARENT_ID, title: 'Inspect Font', contexts: ['all'] },
+          () => {
+            void chrome.runtime.lastError;
+            resolve(true);
+          }
+        );
+      });
     });
   });
+}
+
+async function refreshContextMenu() {
+  const settings = await self.AlphaFonts.settings.load();
+  return syncContextMenu(settings.contextMenu);
+}
+
+chrome.runtime.onInstalled.addListener(refreshContextMenu);
+chrome.runtime.onStartup.addListener(refreshContextMenu);
+
+// Turning the option on or off in Options (or anywhere else) updates the menu straight away.
+chrome.storage.onChanged.addListener((changes, area) => {
+  const next = self.AlphaFonts.settings.fromChange(changes, area);
+  if (next) syncContextMenu(next.contextMenu);
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {

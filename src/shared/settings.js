@@ -27,7 +27,7 @@
   function defaults() {
     const properties = {};
     for (const p of PROPERTIES) properties[p.key] = true;
-    return { theme: 'dark', colorFormat: 'hex', showAllOnHover: true, copyAsRule: false, properties };
+    return { theme: 'dark', colorFormat: 'hex', showAllOnHover: true, copyAsRule: false, contextMenu: true, properties };
   }
 
   /** Turns whatever is in storage into a complete, valid settings object. */
@@ -45,6 +45,7 @@
       colorFormat: saved.colorFormat === 'rgb' ? 'rgb' : 'hex',
       showAllOnHover: saved.showAllOnHover !== false,
       copyAsRule: saved.copyAsRule === true,
+      contextMenu: saved.contextMenu !== false,
       properties
     };
   }

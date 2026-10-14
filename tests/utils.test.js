@@ -109,13 +109,15 @@ test('settings are always complete and valid, and old theme-only data still work
   assert.strictEqual(fresh.theme, 'dark');
   assert.strictEqual(fresh.colorFormat, 'hex');
   assert.strictEqual(fresh.showAllOnHover, true);
+  assert.strictEqual(fresh.contextMenu, true);
   assert.strictEqual(Object.keys(fresh.properties).length, settings.PROPERTIES.length);
   assert.ok(Object.values(fresh.properties).every((v) => v === true));
   assert.strictEqual(settings.normalize(undefined, 'light').theme, 'light'); // version 2.0 data
-  const custom = settings.normalize({ theme: 'nope', colorFormat: 'rgb', showAllOnHover: false, properties: { fontSize: false, bogus: false } });
+  const custom = settings.normalize({ theme: 'nope', colorFormat: 'rgb', showAllOnHover: false, contextMenu: false, properties: { fontSize: false, bogus: false } });
   assert.strictEqual(custom.theme, 'dark');
   assert.strictEqual(custom.colorFormat, 'rgb');
   assert.strictEqual(custom.showAllOnHover, false);
+  assert.strictEqual(custom.contextMenu, false);
   assert.strictEqual(custom.properties.fontSize, false);
   assert.strictEqual(custom.properties.fontFamily, true);
   assert.strictEqual('bogus' in custom.properties, false);

@@ -13,6 +13,7 @@
     $('showAllOnHover').checked = settings.showAllOnHover;
     $('hex').checked = settings.colorFormat === 'hex';
     $('copyAsRule').checked = settings.copyAsRule;
+    $('contextMenu').checked = settings.contextMenu;
   }
 
   async function update(patch) {
@@ -42,6 +43,7 @@
     $('showAllOnHover').addEventListener('change', (e) => update({ showAllOnHover: e.target.checked }));
     $('hex').addEventListener('change', (e) => update({ colorFormat: e.target.checked ? 'hex' : 'rgb' }));
     $('copyAsRule').addEventListener('change', (e) => update({ copyAsRule: e.target.checked }));
+    $('contextMenu').addEventListener('change', (e) => update({ contextMenu: e.target.checked }));
     $('props-all').addEventListener('click', () => setAll(true));
     $('props-none').addEventListener('click', () => setAll(false));
     $('reset').addEventListener('click', async () => {

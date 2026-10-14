@@ -4,7 +4,7 @@
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 2.2.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.3.0 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
@@ -60,7 +60,7 @@ While inspecting, clicks are used to pick text, so links and buttons on the page
 Other ways to start:
 
 - Press `Alt + Shift + F` (press it again to stop).
-- Right-click the page and choose **AlphaFonts > Inspect Font**.
+- Right-click the page and choose **AlphaFonts > Inspect Font** (can be turned off in Options).
 
 You can change the shortcut at `chrome://extensions/shortcuts`. The popup always shows the shortcut that is currently set.
 
@@ -109,7 +109,11 @@ Permissions used, and why:
 | `contextMenus` | Adds the **AlphaFonts > Inspect Font** right-click item. |
 | `storage` | Saves your settings (theme, chosen properties, switches) on your own computer. Nothing else is stored. |
 
-## What's new in 2.2
+## What's new in 2.3
+
+- New option to turn the right-click menu (**AlphaFonts > Inspect Font**) on or off. The toolbar button and shortcut always work.
+
+## What was new in 2.2
 
 - New AlphaFonts logo for the toolbar icon, popup, options page and in-page panel.
 - New color scheme taken from the logo: brand teal `#168575` and mist white `#E8F3F1`, in both dark and light themes.
