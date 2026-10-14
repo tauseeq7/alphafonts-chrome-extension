@@ -65,6 +65,7 @@ node tools/package.js chrome
 This creates `releases/alphafonts-font-inspector-<version>-chrome.zip` (the same extension, packed for upload).
 
 - **Opera Add-ons:** [`opera/LISTING.md`](opera/LISTING.md) has the text to paste. Submit at <https://addons.opera.com/developer/>.
+- **Microsoft Edge Add-ons:** the same zip works. [`edge/LISTING.md`](edge/LISTING.md) has the text, and `screenshots/store/edge/` has the logo and promo tiles Edge asks for. Submit at <https://partner.microsoft.com/dashboard/microsoftedge/overview>.
 - **Chrome Web Store:** the same zip works. Store-size (1280x800) screenshots are in `screenshots/store/`.
 - The popup finds each browser's own keyboard-shortcut page (`opera://`, `edge://` or `chrome://`).
 
