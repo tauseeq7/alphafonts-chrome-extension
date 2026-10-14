@@ -191,7 +191,10 @@
     link.textContent = 'Change shortcut';
     link.addEventListener('click', (event) => {
       event.preventDefault();
-      chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+      // If the browser refuses to open its settings page, say where to find it instead.
+      chrome.tabs.create({ url: window.AlphaFonts.utils.shortcutSettingsUrl() }).catch(() => {
+        shortcutNote.textContent = "Open your browser's extensions page and choose Keyboard shortcuts.";
+      });
     });
     shortcutNote.append(link);
   }

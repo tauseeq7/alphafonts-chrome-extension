@@ -4,7 +4,7 @@
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 2.5.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.5.1 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
@@ -52,15 +52,31 @@ You do not need npm or any tools. Chrome can load the folder directly.
 
 The AlphaFonts icon now appears in the toolbar. Click the puzzle-piece icon and pin it if you do not see it.
 
+## Opera, Edge and other Chromium browsers
+
+Opera, Edge, Brave and Vivaldi are built on Chromium, so the Chrome extension runs in them as it is. To load it for testing, open the browser's extensions page (`opera://extensions`, `edge://extensions`, ...), turn on Developer mode and use **Load unpacked**, exactly like Chrome.
+
+To publish it, build the store package and follow the listing text:
+
+```
+node tools/package.js chrome
+```
+
+This creates `releases/alphafonts-font-inspector-<version>-chrome.zip` (the same extension, packed for upload).
+
+- **Opera Add-ons:** [`opera/LISTING.md`](opera/LISTING.md) has the text to paste. Submit at <https://addons.opera.com/developer/>.
+- **Chrome Web Store:** the same zip works. Store-size (1280x800) screenshots are in `screenshots/store/`.
+- The popup finds each browser's own keyboard-shortcut page (`opera://`, `edge://` or `chrome://`).
+
 ## Firefox
 
 The same code runs in Firefox 142 or newer. Firefox needs a slightly different manifest, so the Firefox package is built from the Chrome files by one small script (nothing to install except Node.js):
 
 ```
-node firefox/package.js
+node tools/package.js firefox
 ```
 
-This creates `releases/alphafonts-font-inspector-<version>-firefox.zip`.
+This creates `releases/alphafonts-font-inspector-<version>-firefox.zip` (the older command `node firefox/package.js` still works).
 
 - **Try it in Firefox:** open `about:debugging`, click **This Firefox**, then **Load Temporary Add-on...** and pick that zip (or the `manifest.json` of the unzipped folder). Temporary add-ons disappear when Firefox closes.
 - **Publish it:** upload the zip at <https://addons.mozilla.org/developers/>. Ready-to-paste listing text, privacy policy and reviewer notes are in [`firefox/LISTING.md`](firefox/LISTING.md).
@@ -178,8 +194,10 @@ src/content/             The inspector that runs inside webpages
   inspector.css          Styles for the panel
 src/popup/               The toolbar popup
 src/options/             The options page
-firefox/                 Firefox package builder and addons.mozilla.org listing text
-releases/                Built packages (Firefox zip)
+tools/package.js         Builds the store zips (Chrome/Opera and Firefox)
+firefox/, opera/         Listing text to paste into the Firefox and Opera stores
+releases/                Built packages
+PRIVACY.md               Privacy policy
 src/shared/              Constants, settings storage, helpers (colors, font stacks, restricted URLs)
 src/icons/               Extension icons
 tests/                   Unit tests for the pure helpers

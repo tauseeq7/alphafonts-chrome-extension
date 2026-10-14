@@ -1,7 +1,7 @@
 # Firefox Add-ons (AMO) listing: copy and paste
 
-Upload file: `releases/alphafonts-font-inspector-2.5.0-firefox.zip`
-(rebuild it any time with `node firefox/package.js`).
+Upload file: `releases/alphafonts-font-inspector-2.5.1-firefox.zip`
+(rebuild it any time with `node tools/package.js firefox`).
 
 ## Name
 AlphaFonts Font Inspector

@@ -221,3 +221,19 @@ test('the Firefox package keeps every file the Chrome extension needs', () => {
   assert.ok(names.every((name) => !name.startsWith('tests/') && !name.startsWith('screenshots/')), 'tests and screenshots are left out');
   assert.ok(names.length >= 20);
 });
+
+test('shortcut settings address matches the browser', () => {
+  const urlFor = (userAgent) => {
+    const sandbox = { URL, navigator: { userAgent } };
+    sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+    for (const file of ['src/shared/constants.js', 'src/shared/utils.js']) {
+      vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), sandbox, { filename: file });
+    }
+    return sandbox.AlphaFonts.utils.shortcutSettingsUrl();
+  };
+  const chromeUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36';
+  assert.strictEqual(urlFor(chromeUA), 'chrome://extensions/shortcuts');
+  assert.strictEqual(urlFor(chromeUA + ' OPR/103.0.0.0'), 'opera://extensions/shortcuts');
+  assert.strictEqual(urlFor(chromeUA + ' Edg/117.0.2045.60'), 'edge://extensions/shortcuts');
+});

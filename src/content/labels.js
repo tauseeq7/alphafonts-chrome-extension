@@ -271,9 +271,11 @@
     }
 
     /**
-     * Picks where a label goes. Preferred spots, in order: above the element's left edge,
-     * above its right edge, below it, inside its top-left corner. The first spot that
-     * covers neither another label nor another element's text wins.
+     * Picks where a label goes. Candidate spots: above the element's left edge, above its right
+     * edge, below it, and inside its top-left corner. Each spot is scored by how much text
+     * box it would cover (its own element counts too, so "inside" is a last resort). Spots
+     * that would sit on another label are skipped. The lowest score wins; ties go to the
+     * earlier spot, so a label is above its element whenever that is free.
      */
     function chooseSpot(element, rect, w, shown, placed, view) {
       const clampX = (x) => Math.max(0, Math.min(x, view.width - w - 2));
@@ -288,29 +290,43 @@
       const recent = placed.slice(-COLLISION_WINDOW);
       const hitsLabel = (c) =>
         recent.some((p) => c.x < p.x + p.w + PILL_GAP && c.x + w + PILL_GAP > p.x && c.y < p.y + PILL_HEIGHT && c.y + PILL_HEIGHT > p.y);
-      const hitsText = (c) => {
+
+      // How many square pixels of text boxes the label would cover.
+      const coverage = (c) => {
+        let area = 0;
         for (const other of shown) {
           if (other.rect.top >= c.y + PILL_HEIGHT) break; // `shown` is sorted by top
-          if (other.element === element || other.element.contains(element) || element.contains(other.element)) continue;
+          const isSelf = other.element === element;
+          if (!isSelf && (other.element.contains(element) || element.contains(other.element))) continue;
           const r = other.rect;
-          if (c.x < r.right && c.x + w > r.left && c.y < r.bottom && c.y + PILL_HEIGHT > r.top) return true;
+          const overlapX = Math.min(c.x + w, r.right) - Math.max(c.x, r.left);
+          const overlapY = Math.min(c.y + PILL_HEIGHT, r.bottom) - Math.max(c.y, r.top);
+          if (overlapX > 0 && overlapY > 0) area += overlapX * overlapY;
         }
-        return false;
+        return area;
       };
 
-      const clean = candidates.find((c) => !hitsLabel(c) && !hitsText(c));
-      if (clean) return clean;
+      let best = null;
+      for (const candidate of candidates) {
+        if (hitsLabel(candidate)) continue;
+        const cost = coverage(candidate);
+        if (!best || cost < best.cost) best = { ...candidate, cost };
+        if (cost === 0) break;
+      }
+      if (best) return best;
 
-      // Crowded: keep the first spot that avoids other labels, sliding right or dropping down.
+      // Every spot is taken by another label: slide right, or drop below the one in the way.
       let x = clampX(rect.left);
       let y = above >= 0 ? above : rect.top + 2;
       for (let attempt = 0; attempt < 4; attempt++) {
         const hit = recent.find((p) => x < p.x + p.w + PILL_GAP && x + w + PILL_GAP > p.x && y < p.y + PILL_HEIGHT && y + PILL_HEIGHT > p.y);
         if (!hit) break;
         x = hit.x + hit.w + PILL_GAP;
-        if (x + w > view.width) {
-          x = Math.max(0, rect.left);
+        if (x + w > view.width - 2) {
+          x = clampX(rect.left);
           y = hit.y + PILL_HEIGHT + 2;
+        } else {
+          x = clampX(x);
         }
       }
       return { x, y };

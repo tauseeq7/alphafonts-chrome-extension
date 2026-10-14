@@ -277,8 +277,20 @@
     return typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
   }
 
+  /**
+   * Where a Chromium browser keeps its keyboard-shortcut settings. Each browser uses its own
+   * address scheme: Opera "opera://", Edge "edge://", Chrome and others "chrome://".
+   */
+  function shortcutSettingsUrl() {
+    const agent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    if (/\bOPR\//.test(agent)) return 'opera://extensions/shortcuts';
+    if (/\bEdg\//.test(agent)) return 'edge://extensions/shortcuts';
+    return 'chrome://extensions/shortcuts';
+  }
+
   root.AlphaFonts.utils = {
     isFirefox,
+    shortcutSettingsUrl,
     isRestrictedUrl,
     parseColor,
     toHex,

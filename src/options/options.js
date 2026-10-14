@@ -64,7 +64,13 @@
       $('change-shortcut').hidden = true;
       $('shortcut-help').hidden = false;
     } else {
-      $('change-shortcut').addEventListener('click', () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }));
+      $('change-shortcut').addEventListener('click', () => {
+        // If the browser refuses to open its settings page, say where to find it instead.
+        chrome.tabs.create({ url: window.AlphaFonts.utils.shortcutSettingsUrl() }).catch(() => {
+          $('shortcut-help').textContent = "Open your browser's extensions page and choose Keyboard shortcuts.";
+          $('shortcut-help').hidden = false;
+        });
+      });
     }
     $('version').textContent = chrome.runtime.getManifest().version;
 

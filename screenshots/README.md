@@ -15,3 +15,5 @@
 
 Captured from the real extension running in Chromium on a small local test page.
 | `inspector-light.png` | Light mode, with the preview showing the picked text |
+
+`store/` holds four 1280x800 screenshots made for app-store listings (Opera, Chrome Web Store).
