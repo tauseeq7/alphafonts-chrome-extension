@@ -42,7 +42,7 @@ Made by AlphaFonts: https://alphafonts.com
 Pick the closest one offered, for example Developer Tools (or Productivity).
 
 ## Icon
-`src/icons/icon128.png` (128x128), or `screenshots/logo.png` (512x512) if a larger icon is accepted.
+`screenshots/store/logo-64x64.png` (exactly 64x64, the size Opera asks for). Other stores: `src/icons/icon128.png` (128x128) or `screenshots/logo.png` (512x512).
 
 ## Screenshots (1280x800, from `screenshots/store/`)
 1. `1-inspect-and-copy.png`
