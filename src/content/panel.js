@@ -32,17 +32,51 @@
   const WEIGHTS = ['100', '200', '300', '400', '500', '600', '700', '800', '900'];
   const EDIT_FIELDS = [
     { key: 'fontFamily', label: 'Family', css: 'font-family', data: 'fontFamily', kind: 'text' },
-    { key: 'fontSize', label: 'Size', css: 'font-size', data: 'fontSize', kind: 'text', step: 1 },
+    { key: 'fontSize', label: 'Size', css: 'font-size', data: 'fontSize', kind: 'text', step: 1, units: ['px', 'rem', 'em'] },
     { key: 'fontWeight', label: 'Weight', css: 'font-weight', data: 'fontWeight', kind: 'select', options: WEIGHTS },
     { key: 'fontStyle', label: 'Style', css: 'font-style', data: 'fontStyle', kind: 'select', options: ['normal', 'italic', 'oblique'] },
     { key: 'fontColor', label: 'Color', css: 'color', data: 'color', kind: 'color' },
-    { key: 'lineHeight', label: 'Line height', css: 'line-height', data: 'lineHeight', kind: 'text', step: 1 },
-    { key: 'letterSpacing', label: 'Spacing', css: 'letter-spacing', data: 'letterSpacing', kind: 'text', step: 0.1 },
-    { key: 'wordSpacing', label: 'Word spacing', css: 'word-spacing', data: 'wordSpacing', kind: 'text', step: 1 },
+    { key: 'lineHeight', label: 'Line height', css: 'line-height', data: 'lineHeight', kind: 'text', step: 1, units: ['px', 'unitless'] },
+    { key: 'letterSpacing', label: 'Spacing', css: 'letter-spacing', data: 'letterSpacing', kind: 'text', step: 0.1, units: ['px', 'em', 'rem'] },
+    { key: 'wordSpacing', label: 'Word spacing', css: 'word-spacing', data: 'wordSpacing', kind: 'text', step: 1, units: ['px', 'em', 'rem'] },
     { key: 'textAlign', label: 'Align', css: 'text-align', data: 'textAlign', kind: 'select', options: ['left', 'center', 'right', 'justify', 'start', 'end'] },
     { key: 'textTransform', label: 'Transform', css: 'text-transform', data: 'textTransform', kind: 'select', options: ['none', 'uppercase', 'lowercase', 'capitalize'] },
     { key: 'textDecoration', label: 'Decoration', css: 'text-decoration-line', data: 'textDecorationLine', kind: 'select', options: ['none', 'underline', 'line-through', 'overline'] }
   ];
+
+  // Slider ranges per field and unit: [min, max, step]. "" means a unitless number.
+  const SLIDER_RANGES = {
+    fontSize: { px: [6, 120, 1], rem: [0.4, 8, 0.05], em: [0.4, 8, 0.05] },
+    lineHeight: { '': [0.8, 3, 0.05], px: [8, 160, 1], em: [0.8, 3, 0.05] },
+    letterSpacing: { px: [-5, 20, 0.1], em: [-0.1, 0.5, 0.01], rem: [-0.1, 0.5, 0.01] },
+    wordSpacing: { px: [-5, 40, 1], em: [-0.2, 1, 0.01], rem: [-0.2, 1, 0.01] }
+  };
+
+  /** Works out a slider's range for the text currently in a field, or null if it has no sensible slider. */
+  function sliderFor(field, text) {
+    const match = String(text).trim().match(/^(-?\d*\.?\d+)([a-z%]*)$/i);
+    let value;
+    let unit;
+    if (match) {
+      value = parseFloat(match[1]);
+      unit = match[2].toLowerCase();
+    } else if (String(text).trim() === 'normal') {
+      value = field.key === 'lineHeight' ? 1.2 : 0;
+      unit = field.key === 'lineHeight' ? '' : 'px';
+    } else {
+      return null;
+    }
+    const range = SLIDER_RANGES[field.key] && SLIDER_RANGES[field.key][unit];
+    if (!range) return null;
+    return { min: Math.min(range[0], value), max: Math.max(range[1], value), step: range[2], value, unit };
+  }
+
+  /** Which unit option matches the text: "18px" -> "px", "1.5" -> "unitless". */
+  function unitOf(text) {
+    const match = String(text).trim().match(/^-?\d*\.?\d+([a-z%]*)$/i);
+    if (!match) return null;
+    return match[1] === '' ? 'unitless' : match[1].toLowerCase();
+  }
 
   // ---------------------------------------------------------------------
   // Tiny DOM helpers
@@ -137,7 +171,8 @@
   /**
    * handlers: { onCopyCSS, onCopyInfo, onCopySelector, onCopyColor, onColorFormat(format),
    *             onThemeToggle, onUnlock, onStop, onLayoutChange,
-   *             onToggleEdit, onEdit(cssProperty, value) -> boolean, onResetEdits }
+   *             onToggleEdit, onEdit(cssProperty, value) -> boolean, onResetEdits,
+   *             onResetField(cssProperty), onConvert(cssProperty, unit) -> string | null, onCopyChanges }
    */
   function createPanel(handlers) {
     // Remove leftovers from an older copy of the extension (e.g. after an update).
@@ -155,6 +190,7 @@
     const shadow = host.attachShadow({ mode: 'closed' });
 
     const ui = {};
+    const fieldRefs = new Map(); // css property -> the controls of its edit field
     const timers = new Set();
     let colorFormat = 'hex';
 
@@ -188,11 +224,13 @@
     ui.hexBtn = h('button', { type: 'button', 'data-format': 'hex', 'aria-pressed': 'true' }, 'HEX');
     ui.rgbBtn = h('button', { type: 'button', 'data-format': 'rgb', 'aria-pressed': 'false' }, 'RGB');
     const formatSwitch = h('div', { class: 'af-segmented', role: 'group', 'aria-label': 'Color format' }, [ui.hexBtn, ui.rgbBtn]);
-    ui.colorSection = h('div', { class: 'af-section af-full af-view' }, [h('h2', { class: 'af-label' }, 'Color'), h('div', { class: 'af-color-row' }, [ui.colorBtn, formatSwitch])]);
+    ui.contrastView = h('p', { class: 'af-contrast', hidden: true });
+    ui.colorSection = h('div', { class: 'af-section af-full af-view' }, [h('h2', { class: 'af-label' }, 'Color'), h('div', { class: 'af-color-row' }, [ui.colorBtn, formatSwitch]), ui.contrastView]);
 
     // Edit form (filled when edit mode starts)
     ui.editForm = h('div', { class: 'af-fields' });
-    ui.editSection = h('div', { class: 'af-section af-full af-edit' }, [h('h2', { class: 'af-label' }, 'Edit values (live on this page)'), ui.editForm]);
+    ui.contrastEdit = h('div', { class: 'af-contrast-box', hidden: true });
+    ui.editSection = h('div', { class: 'af-section af-full af-edit' }, [h('h2', { class: 'af-label' }, 'Edit values (live on this page)'), ui.editForm, ui.contrastEdit]);
 
     ui.preview = h('div', { class: 'af-preview', 'aria-label': 'Typography preview' }, PREVIEW_TEXT);
     ui.previewSection = h('div', { class: 'af-section af-full' }, [h('h2', { class: 'af-label' }, 'Preview'), ui.preview]);
@@ -219,8 +257,9 @@
     ui.unlock = h('button', { type: 'button', class: 'af-btn' }, 'Unlock');
     ui.editBtn = h('button', { type: 'button', class: 'af-btn', 'aria-pressed': 'false' }, 'Edit values');
     ui.resetBtn = h('button', { type: 'button', class: 'af-btn', disabled: true }, 'Reset edits');
+    ui.copyChanges = h('button', { type: 'button', class: 'af-btn af-btn-wide', disabled: true, 'data-label': 'Copy changes' }, 'Copy changes');
     ui.link = h('a', { class: 'af-link', href: WEBSITE_URL, target: '_blank', rel: 'noopener noreferrer' }, 'Find more font tools at AlphaFonts');
-    ui.actions = h('div', { class: 'af-actions', hidden: true }, [ui.copyCss, ui.copyInfo, ui.copySelector, ui.unlock, ui.editBtn, ui.resetBtn, ui.link]);
+    ui.actions = h('div', { class: 'af-actions', hidden: true }, [ui.copyCss, ui.copyInfo, ui.copySelector, ui.unlock, ui.editBtn, ui.resetBtn, ui.copyChanges, ui.link]);
 
     ui.hint = h('span', {});
     ui.stop = h('button', { type: 'button', class: 'af-stop', hidden: true }, 'Stop Inspecting');
@@ -262,6 +301,7 @@
     press(ui.themeBtn, () => handlers.onThemeToggle());
     press(ui.editBtn, () => handlers.onToggleEdit());
     press(ui.resetBtn, () => handlers.onResetEdits());
+    press(ui.copyChanges, () => handlers.onCopyChanges());
     press(ui.stop, () => handlers.onStop());
     for (const button of [ui.hexBtn, ui.rgbBtn]) {
       button.addEventListener('click', () => {
@@ -339,6 +379,38 @@
       style.backgroundColor = darkText ? '#f4f9f8' : '#0b1513';
     }
 
+    /** One-line summary for the Color section, and the fuller box (with a fix button) in edit mode. */
+    function renderContrast(contrast, enabled) {
+      const show_ = !!contrast && enabled.fontColor;
+      show(ui.contrastView, show_);
+      show(ui.contrastEdit, show_);
+      if (!show_) return;
+
+      const ratio = contrast.ratio.toFixed(2) + ':1';
+      const level = contrast.aaa ? 'AAA pass' : contrast.aa ? 'AA pass, AAA fail' : 'AA fail';
+      ui.contrastView.textContent = 'Contrast ' + (contrast.uncertain ? '\u2248 ' : '') + ratio + ' \u00b7 ' + level;
+      ui.contrastView.setAttribute('data-pass', String(contrast.aa));
+
+      ui.contrastEdit.replaceChildren(
+        h('p', { class: 'af-contrast', 'data-pass': String(contrast.aa) }, [
+          h('strong', {}, 'Contrast ' + (contrast.uncertain ? '\u2248 ' : '') + ratio),
+          ' \u00b7 ' + level + ' (' + (contrast.large ? 'large' : 'normal') + ' text on ' + contrast.background + ')'
+        ])
+      );
+      if (contrast.uncertain) {
+        ui.contrastEdit.append(h('p', { class: 'af-note' }, 'The background is an image or gradient, so this is approximate.'));
+      }
+      if (contrast.suggestion) {
+        const apply = h('button', { type: 'button', class: 'af-btn af-suggest' }, 'Use ' + contrast.suggestion + ' to pass AA');
+        apply.addEventListener('click', () => {
+          const ref = fieldRefs.get('color');
+          handlers.onEdit('color', contrast.suggestion);
+          if (ref) ref.input.value = contrast.suggestion;
+        });
+        ui.contrastEdit.append(apply);
+      }
+    }
+
     function renderMore(data, enabled) {
       ui.moreRows.replaceChildren();
       for (const [key, label] of MORE_KEYS) {
@@ -376,7 +448,7 @@
       ui.elementHint.textContent = element.tag.toLowerCase() + (element.id ? '#' + element.id : firstClass);
     }
 
-    /** model: { data, element, settings } */
+    /** model: { data, element, settings, contrast } */
     function render(model) {
       const { data, element, settings } = model;
       const enabled = settings.properties;
@@ -395,6 +467,7 @@
 
       renderColor(data.color);
       show(ui.colorSection, enabled.fontColor);
+      renderContrast(model.contrast, enabled);
       renderPreview(data);
       renderMore(data, enabled);
       renderCompact(data, enabled);
@@ -435,47 +508,120 @@
 
     // ----- Edit mode -----
 
+    function createResetIcon() {
+      const icon = svg('svg', {
+        viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2.2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false'
+      });
+      icon.append(svg('path', { d: 'M3 12a9 9 0 1 0 3-6.7' }), svg('path', { d: 'M3 4v5h5' }));
+      return icon;
+    }
+
+    /** Keeps a field's slider and unit picker in step with the text typed in its box. */
+    function syncControls(ref) {
+      const text = ref.input.value;
+      if (ref.slider) {
+        const config = sliderFor(ref.field, text);
+        ref.slider.hidden = !config;
+        if (config) {
+          ref.slider.min = config.min;
+          ref.slider.max = config.max;
+          ref.slider.step = config.step;
+          ref.slider.value = config.value;
+          ref.slider.setAttribute('aria-valuetext', text);
+          ref.sliderUnit = config.unit;
+        }
+      }
+      if (ref.unit) {
+        const unit = unitOf(text);
+        if (unit && ref.field.units.includes(unit)) ref.unit.value = unit;
+      }
+    }
+
     function buildField(field, data) {
       const current = data[field.data] || '';
-      let input;
-      const extra = [];
+      const ref = { field, input: null, slider: null, unit: null, reset: null, sliderUnit: '' };
+      const row = h('span', { class: 'af-field-input' });
+      let picker = null;
 
       if (field.kind === 'select') {
-        input = h('select', { 'aria-label': field.label });
+        ref.input = h('select', { 'aria-label': field.label });
         const options = field.options.includes(current) || !current ? field.options : [current].concat(field.options);
-        for (const option of options) input.append(h('option', { value: option }, option));
-        input.value = current || field.options[0];
-        input.addEventListener('change', () => applyEdit(field, input));
+        for (const option of options) ref.input.append(h('option', { value: option }, option));
+        ref.input.value = current || field.options[0];
+        ref.input.addEventListener('change', () => applyEdit(field, ref.input));
       } else {
-        input = h('input', { type: 'text', value: current, 'aria-label': field.label, spellcheck: 'false', autocomplete: 'off' });
-        input.addEventListener('input', () => applyEdit(field, input));
+        ref.input = h('input', { type: 'text', value: current, 'aria-label': field.label, spellcheck: 'false', autocomplete: 'off' });
+        ref.input.addEventListener('input', () => {
+          applyEdit(field, ref.input);
+          syncControls(ref);
+        });
         if (field.step) {
-          input.addEventListener('keydown', (event) => {
+          ref.input.addEventListener('keydown', (event) => {
             if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
             const step = event.shiftKey ? field.step * 10 : field.step;
-            const next = stepValue(input.value, event.key === 'ArrowUp' ? 1 : -1, step);
+            const next = stepValue(ref.input.value, event.key === 'ArrowUp' ? 1 : -1, step);
             if (next === null) return;
             event.preventDefault();
-            input.value = next;
-            applyEdit(field, input);
+            ref.input.value = next;
+            applyEdit(field, ref.input);
+            syncControls(ref);
           });
         }
         if (field.kind === 'color') {
-          const picker = h('input', { type: 'color', 'aria-label': 'Pick a color', class: 'af-picker' });
+          picker = h('input', { type: 'color', 'aria-label': 'Pick a color', class: 'af-picker' });
           const parsed = utils.parseColor(current);
           picker.value = parsed ? utils.toHex(parsed) : '#000000';
           picker.addEventListener('input', () => {
-            input.value = picker.value;
-            applyEdit(field, input);
+            ref.input.value = picker.value;
+            applyEdit(field, ref.input);
           });
-          input.addEventListener('input', () => {
-            const color = utils.parseColor(input.value);
+          ref.input.addEventListener('input', () => {
+            const color = utils.parseColor(ref.input.value);
             if (color && utils.isOpaque(color)) picker.value = utils.toHex(color);
           });
-          extra.push(picker);
         }
       }
-      return h('label', { class: 'af-field' }, [h('span', {}, field.label), h('span', { class: 'af-field-input' }, [input].concat(extra))]);
+      row.append(ref.input);
+      if (picker) row.append(picker);
+
+      // Unit picker: converts the value (e.g. 32px -> 2rem) without changing how the text looks.
+      if (field.units) {
+        ref.unit = h('select', { class: 'af-unit', 'aria-label': field.label + ' unit', title: 'Convert to another unit' });
+        for (const unit of field.units) ref.unit.append(h('option', { value: unit }, unit));
+        ref.unit.addEventListener('change', () => {
+          const converted = handlers.onConvert(field.css, ref.unit.value);
+          if (converted === null) return;
+          ref.input.value = converted;
+          applyEdit(field, ref.input);
+          syncControls(ref);
+        });
+        row.append(ref.unit);
+      }
+
+      // Per-field undo, shown only once that value has been changed.
+      ref.reset = h('button', { type: 'button', class: 'af-field-reset', 'aria-label': 'Reset ' + field.label, title: 'Reset this value', hidden: true }, [createResetIcon()]);
+      ref.reset.addEventListener('click', () => handlers.onResetField(field.css));
+      row.append(ref.reset);
+
+      const body = h('span', { class: 'af-field-body' }, [row]);
+      if (SLIDER_RANGES[field.key]) {
+        ref.slider = h('input', { type: 'range', class: 'af-slider', 'aria-label': field.label + ' slider', min: '0', max: '100', step: '1', value: '0' });
+        ref.slider.addEventListener('input', () => {
+          const step = parseFloat(ref.slider.step) || 1;
+          const value = Math.round(parseFloat(ref.slider.value) / step) * step;
+          ref.input.value = String(Number(value.toFixed(3))) + ref.sliderUnit;
+          applyEdit(field, ref.input);
+          if (ref.unit) {
+            const unit = unitOf(ref.input.value);
+            if (unit && field.units.includes(unit)) ref.unit.value = unit;
+          }
+        });
+        body.append(ref.slider);
+      }
+      syncControls(ref);
+      fieldRefs.set(field.css, ref);
+      return h('div', { class: 'af-field' }, [h('span', { class: 'af-field-label' }, field.label), body]);
     }
 
     function applyEdit(field, input) {
@@ -489,6 +635,7 @@
       ui.editBtn.setAttribute('aria-pressed', String(editing));
       ui.editBtn.textContent = editing ? 'Done editing' : 'Edit values';
       ui.editForm.replaceChildren();
+      fieldRefs.clear();
       if (editing && data) {
         const fields = EDIT_FIELDS.filter((f) => enabled[f.key]);
         for (const field of fields) ui.editForm.append(buildField(field, data));
@@ -496,8 +643,15 @@
       }
     }
 
+    /** Enables the Reset / Copy changes buttons once something has been edited. */
     function setEdited(edited) {
       ui.resetBtn.disabled = !edited;
+      ui.copyChanges.disabled = !edited;
+    }
+
+    /** Shows a small undo button on every field that has been changed. `changed` is a Set of CSS property names. */
+    function setEditedProps(changed) {
+      for (const [css, ref] of fieldRefs) ref.reset.hidden = !changed.has(css);
     }
 
     // ----- Positioning -----
@@ -606,7 +760,7 @@
     }
 
     return {
-      buttons: { copyCss: ui.copyCss, copyInfo: ui.copyInfo, copySelector: ui.copySelector },
+      buttons: { copyCss: ui.copyCss, copyInfo: ui.copyInfo, copySelector: ui.copySelector, copyChanges: ui.copyChanges },
       mount(cssText) {
         const style = document.createElement('style');
         style.textContent = cssText;
@@ -628,6 +782,7 @@
       setTheme,
       setEditing,
       setEdited,
+      setEditedProps,
       setHighlight,
       place,
       showPanel(visible) {

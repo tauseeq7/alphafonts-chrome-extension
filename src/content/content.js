@@ -30,6 +30,7 @@
     element: null, // element currently shown in the panel
     data: null,
     info: null,
+    contrast: null, // readability of the locked element's text (null while hovering)
     cursor: { x: 0, y: 0 },
     pendingTarget: null,
     needsHitTest: false, // re-find the element under the cursor (after scroll)
@@ -126,7 +127,10 @@
           onLayoutChange: updateLayout,
           onToggleEdit: toggleEditing,
           onEdit: applyEdit,
-          onResetEdits: resetEdits
+          onResetEdits: resetEdits,
+          onResetField: resetField,
+          onConvert: convertUnit,
+          onCopyChanges: copyChanges
         });
         panel.mount(css);
         panel.setTheme(state.settings.theme);
@@ -161,6 +165,7 @@
     state.element = null;
     state.data = null;
     state.info = null;
+    state.contrast = null;
     state.pendingTarget = null;
     state.frame = 0;
     notify(MESSAGES.INSPECTOR_STOPPED);
@@ -341,21 +346,23 @@
     state.element = element;
     state.data = typography.getTypographyData(element);
     state.info = typography.describeElement(element);
+    state.contrast = null;
     state.panel.setCompact(!state.locked && !state.settings.showAllOnHover);
-    state.panel.setEdited(state.edits.has(element));
+    syncEditState();
     renderPanel();
     state.panel.showPanel(true);
     updateLayout();
   }
 
   function renderPanel() {
-    state.panel.render({ data: state.data, element: state.info, settings: state.settings });
+    state.panel.render({ data: state.data, element: state.info, settings: state.settings, contrast: state.locked ? state.contrast : null });
   }
 
   function lock() {
     if (!state.element) return;
     state.locked = true;
     state.info.selector = typography.generateSelector(state.element); // computed once, only when needed
+    state.contrast = typography.getContrast(state.element, state.data);
     state.panel.setLocked(true);
     state.panel.setCompact(false);
     renderPanel();
@@ -371,6 +378,7 @@
     stopWatching();
     state.panel.setLocked(false);
     if (state.info) state.info.selector = '';
+    state.contrast = null;
     state.pendingTarget = document.elementFromPoint(state.cursor.x, state.cursor.y);
     state.needsHitTest = false;
     clearHover();
@@ -428,6 +436,7 @@
     } else {
       state.editing = true;
       state.panel.setEditing(true, state.data, state.settings.properties);
+      syncEditState(); // fields edited earlier get their undo arrow
     }
     updateLayout();
   }
@@ -435,6 +444,23 @@
   function leaveEditing() {
     state.editing = false;
     if (state.panel) state.panel.setEditing(false);
+  }
+
+  /** Tells the panel which buttons/fields to enable for the current element's edits. */
+  function syncEditState() {
+    const originals = state.element && state.edits.get(state.element);
+    state.panel.setEdited(!!originals);
+    state.panel.setEditedProps(new Set(originals ? originals.keys() : []));
+  }
+
+  /** Reads the element again after an edit and refreshes everything that depends on it. */
+  function refreshAfterEdit() {
+    state.data = typography.getTypographyData(state.element);
+    if (state.locked) state.contrast = typography.getContrast(state.element, state.data);
+    renderPanel();
+    syncEditState();
+    updateLayout();
+    labels.refresh();
   }
 
   /** Applies one new value. Returns false when the browser would not accept it. */
@@ -455,41 +481,83 @@
       });
     }
     element.style.setProperty(property, next, 'important');
-
-    state.data = typography.getTypographyData(element);
-    renderPanel();
-    state.panel.setEdited(true);
-    updateLayout();
-    labels.refresh();
+    refreshAfterEdit();
     return true;
+  }
+
+  function restoreProperty(element, property, original) {
+    if (original.value) element.style.setProperty(property, original.value, original.priority);
+    else element.style.removeProperty(property);
+    if (!element.getAttribute('style')) element.removeAttribute('style'); // leave no empty style="" behind
   }
 
   function revertElement(element) {
     const originals = state.edits.get(element);
     if (!originals) return;
-    for (const [property, original] of originals) {
-      if (original.value) element.style.setProperty(property, original.value, original.priority);
-      else element.style.removeProperty(property);
-    }
-    if (!element.getAttribute('style')) element.removeAttribute('style'); // leave no empty style="" behind
+    for (const [property, original] of originals) restoreProperty(element, property, original);
     state.edits.delete(element);
   }
 
   function resetEdits() {
     if (!state.element) return;
     revertElement(state.element);
-    state.data = typography.getTypographyData(state.element);
-    renderPanel();
-    state.panel.setEdited(false);
+    refreshAfterEdit();
     if (state.editing) state.panel.setEditing(true, state.data, state.settings.properties);
-    updateLayout();
-    labels.refresh();
     state.panel.toast('Edits reset');
+  }
+
+  /** Undo a single property (the small arrow next to a field). */
+  function resetField(property) {
+    const element = state.element;
+    const originals = element && state.edits.get(element);
+    if (!originals || !originals.has(property)) return;
+    restoreProperty(element, property, originals.get(property));
+    originals.delete(property);
+    if (!originals.size) state.edits.delete(element);
+    refreshAfterEdit();
+    if (state.editing) {
+      state.panel.setEditing(true, state.data, state.settings.properties); // show the restored value
+      syncEditState();
+    }
   }
 
   function revertAllEdits() {
     for (const element of Array.from(state.edits.keys())) revertElement(element);
     labels.refresh();
+  }
+
+  /**
+   * Converts a field's current value into another unit, keeping the same size on screen:
+   * 32px -> 2rem, 24px line height -> 1.5 (unitless), and so on.
+   */
+  function convertUnit(property, unit) {
+    const element = state.element;
+    if (!element) return null;
+    try {
+      const style = getComputedStyle(element);
+      const fontPx = parseFloat(style.fontSize) || 16;
+      const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const parentPx = element.parentElement ? parseFloat(getComputedStyle(element.parentElement).fontSize) || rootPx : rootPx;
+      const round = (n) => String(Math.round(n * 1000) / 1000);
+
+      if (property === 'font-size') {
+        if (unit === 'rem') return round(fontPx / rootPx) + 'rem';
+        if (unit === 'em') return round(fontPx / parentPx) + 'em';
+        return round(fontPx) + 'px';
+      }
+      if (property === 'line-height') {
+        // "normal" has no number of its own: browsers use about 1.2 times the font size.
+        const px = style.lineHeight === 'normal' ? fontPx * 1.2 : parseFloat(style.lineHeight);
+        return unit === 'unitless' ? round(px / fontPx) : round(px) + 'px';
+      }
+      // letter-spacing / word-spacing ("normal" counts as 0)
+      const px = parseFloat(style[property]) || 0;
+      if (unit === 'em') return round(px / fontPx) + 'em';
+      if (unit === 'rem') return round(px / rootPx) + 'rem';
+      return round(px) + 'px';
+    } catch (e) {
+      return null;
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -513,6 +581,17 @@
     let css = typography.buildCSS(state.data, state.settings.properties);
     if (state.settings.copyAsRule && state.info) css = typography.wrapRule(css, state.info.selector);
     copyAndReport(state.panel.buttons.copyCss, css, 'CSS copied');
+  }
+
+  /** Copies only the properties edited on this element, e.g. "font-size: 2.5rem;". */
+  function copyChanges() {
+    const element = state.element;
+    const originals = element && state.edits.get(element);
+    if (!originals || !originals.size) return;
+    const lines = Array.from(originals.keys()).map((property) => property + ': ' + element.style.getPropertyValue(property) + ';');
+    let css = lines.join('\n');
+    if (state.settings.copyAsRule && state.info) css = typography.wrapRule(css, state.info.selector);
+    copyAndReport(state.panel.buttons.copyChanges, css, 'Changes copied');
   }
 
   function copyFontInfo() {

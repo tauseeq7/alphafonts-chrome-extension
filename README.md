@@ -4,7 +4,7 @@
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 2.4.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.5.0 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
@@ -27,7 +27,11 @@ Made by [AlphaFonts](https://alphafonts.com). Version 2.4.0 for Google Chrome (M
 - **Choose your properties** - 11 checkboxes (font family, size, weight, style, color, line height, letter spacing, word spacing, text align, text transform, text decoration). Only the checked ones appear in the panel, in Copy CSS and in Copy Info.
 - **Show all info on hover** - on: hover shows the full panel; off: hover shows a small card with just your chosen properties.
 - **HEX or RGB colors** - one switch in the popup (also in Options and in the panel).
-- **Live value editing** - lock a text, press **Edit values**, and change family, size, weight, style, color, spacing, align, transform or decoration right on the page. Arrow keys step number fields. **Reset edits** undoes one element; **Remove layers** (popup) closes the inspector and undoes everything.
+- **Live value editing** - lock a text, press **Edit values**, and change family, size, weight, style, color, spacing, align, transform or decoration right on the page.
+  - **Sliders** for size, line height, letter spacing and word spacing; Arrow keys also step number fields (Shift = bigger steps).
+  - **Unit picker** converts a value without changing how it looks: `32px` to `2rem` or `2em`, a `24px` line height to a unitless `1.5`, spacing to `em`.
+  - **Contrast checker** for the text color: the WCAG ratio against the real background (it mixes semi-transparent layers; an image or gradient is marked approximate), AA/AAA pass or fail, and a one-click **Use #xxxxxx to pass AA** fix.
+  - **Undo arrow** on every changed field, **Reset edits** for the whole element, and **Copy changes** to copy only what you changed (for example `font-size: 2.5rem;`). **Remove layers** (popup) closes the inspector and undoes everything.
 - **Options page** - every setting in one place, plus "Copy CSS as a full rule" (`.selector { ... }`).
 - **Live preview** - a short sample of the text you picked, drawn with its detected typography.
 - **Light and dark mode** - use the sun/moon button in the popup, or in the panel once it is locked. Your choice is remembered.
@@ -87,6 +91,7 @@ Being honest about what V1 cannot do:
 - **Shadow DOM.** Text inside *open* shadow roots is inspected. Text inside *closed* shadow roots is reported as the host element at best.
 - **Rendered font is a guess.** Browsers do not tell pages which font file was drawn. The "likely rendered" line compares text widths to find the first available font. It cannot detect per-character fallbacks, and it stays hidden when the stack starts with a system font.
 - **Labels** cover text in the main page (not inside iframes or closed shadow roots), show at most 400 labels at a time (the ones on screen), and read styles when the page changes, so a style change from a hover effect may not show until the next page update.
+- **Contrast** assumes a white page background when none is set, and ignores the opacity of parent elements. Text over images or gradients is shown as approximate.
 - **Live edits are temporary.** They change the page only in your browser, are not saved, and disappear on reload. Edits are written as inline `!important` styles, so they win over the site's CSS.
 - **PDFs and some special viewers** (such as Chrome's built-in PDF viewer) do not allow extensions.
 - **Wide-gamut colors.** Colors written as `lab()`, `oklch()`, and similar are shown exactly as the browser reports them, without a HEX conversion.
@@ -112,7 +117,13 @@ Permissions used, and why:
 | `contextMenus` | Adds the **AlphaFonts > Inspect Font** right-click item. |
 | `storage` | Saves your settings (theme, chosen properties, switches) on your own computer. Nothing else is stored. |
 
-## What's new in 2.4
+## What's new in 2.5
+
+- **Copy changes** copies only the properties you edited, and each edited field has its own undo arrow.
+- **Contrast checker** with WCAG AA/AAA results and a suggested passing color.
+- **Sliders and unit helpers** (px, rem, em, unitless line height) in edit mode.
+
+## What was new in 2.4
 
 - **Label all text on page**: a page-wide view of fonts. Labels show the properties you choose (default: font family, size, weight), skip browser-default values to stay short, and use `lh`, `ls`, `ws` for line height, letter spacing and word spacing.
 - Separate property lists for the panel and for the page labels (popup and Options).

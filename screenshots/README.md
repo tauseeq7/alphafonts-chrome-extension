@@ -5,7 +5,7 @@
 | `logo.png` | The AlphaFonts logo |
 | `page-labels.png` | "Label all text": a label above every text element |
 | `popup.png` | The popup: property toggles, switches, Remove layers, Options, extension info |
-| `inspector-edit.png` | Edit mode: change values live on the page |
+| `inspector-edit.png` | Edit mode: sliders, unit pickers, undo arrows, contrast, Copy changes |
 | `inspector-compact.png` | Compact hover card ("Show all info on hover" off) |
 | `options.png` | The options page |
 | `popup-restricted-page.png` | The popup on a page Chrome does not allow extensions on |

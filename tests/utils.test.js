@@ -160,3 +160,28 @@ test('label settings: separate from panel settings, short by default', () => {
   assert.strictEqual(custom.labelProperties.fontSize, false);
   assert.strictEqual(custom.labelProperties.fontWeight, true);
 });
+
+test('contrast math matches WCAG reference values', () => {
+  const { utils } = load('src/shared/constants.js', 'src/shared/utils.js');
+  const c = (hex) => utils.parseColor(hex);
+  const round = (n) => Math.round(n * 100) / 100;
+  assert.strictEqual(round(utils.contrastRatio(c('#000000'), c('#ffffff'))), 21);
+  assert.strictEqual(round(utils.contrastRatio(c('#ffffff'), c('#ffffff'))), 1);
+  assert.strictEqual(round(utils.contrastRatio(c('#767676'), c('#ffffff'))), 4.54); // the classic "just passes AA" grey
+  assert.strictEqual(round(utils.contrastRatio(c('#777777'), c('#ffffff'))), 4.48); // one step lighter fails
+  const passAA = utils.contrastInfo(c('#767676'), c('#ffffff'), 16, '400');
+  assert.ok(passAA.aa && !passAA.aaa && !passAA.large && passAA.suggestion === null);
+  const fail = utils.contrastInfo(c('#aaaaaa'), c('#ffffff'), 16, '400');
+  assert.ok(!fail.aa && fail.suggestion);
+  assert.ok(utils.contrastRatio(c(fail.suggestion), c('#ffffff')) >= 4.5, 'suggestion really passes AA');
+  // large text has easier targets
+  assert.ok(utils.contrastInfo(c('#949494'), c('#ffffff'), 32, '700').aa);
+  assert.ok(!utils.contrastInfo(c('#949494'), c('#ffffff'), 14, '400').aa);
+  assert.ok(utils.contrastInfo(c('#000'), c('#fff'), 14, '400').aaa);
+  // semi-transparent text is mixed with the background first (50% black on white = #808080, 3.95:1)
+  assert.strictEqual(utils.contrastInfo({ r: 0, g: 0, b: 0, a: 0.5 }, c('#ffffff'), 16, '400').ratio, 3.95);
+  // dark backgrounds suggest lighter text
+  const onDark = utils.contrastInfo(c('#444444'), c('#111111'), 16, '400');
+  assert.ok(!onDark.aa && utils.contrastRatio(c(onDark.suggestion), c('#111111')) >= 4.5);
+  assert.deepStrictEqual({ ...utils.blend({ r: 255, g: 0, b: 0, a: 0.5 }, { r: 0, g: 0, b: 255, a: 1 }) }, { r: 128, g: 0, b: 128, a: 1 });
+});

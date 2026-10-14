@@ -122,6 +122,48 @@
     return data;
   }
 
+  /**
+   * The color behind an element's text: its own background mixed with its parents' until
+   * something opaque is found (white if nothing is). `uncertain` is true when an image or
+   * gradient is involved, because then no single color describes the background.
+   */
+  function getBackground(element) {
+    const layers = [];
+    let uncertain = false;
+    for (let node = element; node && node.nodeType === 1; node = node.parentElement) {
+      let style;
+      try {
+        style = window.getComputedStyle(node);
+      } catch (e) {
+        break;
+      }
+      if (style.backgroundImage && style.backgroundImage !== 'none') uncertain = true;
+      const color = utils.parseColor(style.backgroundColor);
+      if (color && color.a > 0) {
+        layers.push(color);
+        if (color.a >= 1) break;
+      }
+    }
+    let base = { r: 255, g: 255, b: 255, a: 1 };
+    if (layers.length && layers[layers.length - 1].a >= 1) base = layers.pop();
+    for (let i = layers.length - 1; i >= 0; i--) base = utils.blend(layers[i], base);
+    return { color: base, uncertain };
+  }
+
+  /** Contrast of the element's text against its background, or null if it cannot be worked out. */
+  function getContrast(element, data) {
+    try {
+      const text = utils.parseColor(data.color);
+      if (!text) return null;
+      const background = getBackground(element);
+      const info = utils.contrastInfo(text, background.color, parseFloat(data.fontSize) || 16, data.fontWeight);
+      info.uncertain = background.uncertain;
+      return info;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // ---------------------------------------------------------------------
   // "Likely rendered font"
   // ---------------------------------------------------------------------
@@ -399,6 +441,7 @@
   AF.typography = {
     getTypographyData,
     getLabelData,
+    getContrast,
     hasOwnText,
     detectRenderedFont,
     buildCSS,

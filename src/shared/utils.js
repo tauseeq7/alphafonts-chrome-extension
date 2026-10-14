@@ -132,6 +132,105 @@
   }
 
   // ---------------------------------------------------------------------
+  // Contrast (WCAG)
+  // ---------------------------------------------------------------------
+
+  /** Puts a (possibly transparent) color on top of an opaque one. */
+  function blend(top, bottom) {
+    const a = top.a === undefined ? 1 : top.a;
+    return {
+      r: Math.round(top.r * a + bottom.r * (1 - a)),
+      g: Math.round(top.g * a + bottom.g * (1 - a)),
+      b: Math.round(top.b * a + bottom.b * (1 - a)),
+      a: 1
+    };
+  }
+
+  /** WCAG contrast ratio between two opaque colors: 1 (none) to 21 (black on white). */
+  function contrastRatio(a, b) {
+    const l1 = luminance(a);
+    const l2 = luminance(b);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+
+  function rgbToHsl(color) {
+    const r = color.r / 255, g = color.g / 255, b = color.b / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l };
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h;
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    return { h: h / 6, s, l };
+  }
+
+  function hslToRgb(h, s, l) {
+    if (s === 0) {
+      const v = Math.round(l * 255);
+      return { r: v, g: v, b: v, a: 1 };
+    }
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const channel = (t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    return {
+      r: Math.round(channel(h + 1 / 3) * 255),
+      g: Math.round(channel(h) * 255),
+      b: Math.round(channel(h - 1 / 3) * 255),
+      a: 1
+    };
+  }
+
+  /**
+   * The closest color (same hue) that reaches the target contrast on this background,
+   * found by making the text lighter or darker. Returns null if none exists.
+   */
+  function suggestColor(fg, bg, target) {
+    const hsl = rgbToHsl(fg);
+    let best = null;
+    for (const direction of [-1, 1]) {
+      for (let step = 1; step <= 100; step++) {
+        const lightness = hsl.l + (direction * step) / 100;
+        if (lightness < 0 || lightness > 1) break;
+        const candidate = hslToRgb(hsl.h, hsl.s, lightness);
+        if (contrastRatio(candidate, bg) >= target) {
+          if (!best || step < best.step) best = { step, color: candidate };
+          break;
+        }
+      }
+    }
+    return best ? best.color : null;
+  }
+
+  /**
+   * Everything the panel needs to say about readability.
+   * Large text (24px+, or 18.66px+ and bold) has easier targets: AA 3:1, AAA 4.5:1.
+   * Normal text: AA 4.5:1, AAA 7:1. Semi-transparent text is mixed with the background first.
+   */
+  function contrastInfo(fg, bg, fontPx, fontWeight) {
+    const text = fg.a < 1 ? blend(fg, bg) : fg;
+    const ratio = contrastRatio(text, bg);
+    const large = fontPx >= 24 || (fontPx >= 18.66 && Number(fontWeight) >= 700);
+    const aa = ratio >= (large ? 3 : 4.5);
+    const aaa = ratio >= (large ? 4.5 : 7);
+    const info = { ratio: Math.round(ratio * 100) / 100, large, aa, aaa, suggestion: null, background: toHex(bg) };
+    if (!aa) {
+      const better = suggestColor(text, bg, large ? 3 : 4.5);
+      if (better) info.suggestion = toHex(better);
+    }
+    return info;
+  }
+
+  // ---------------------------------------------------------------------
   // Font stacks
   // ---------------------------------------------------------------------
 
@@ -180,6 +279,10 @@
     isOpaque,
     formatColor,
     luminance,
+    blend,
+    contrastRatio,
+    suggestColor,
+    contrastInfo,
     parseFontStack,
     isGenericFamily,
     isSystemFamily
