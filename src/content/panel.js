@@ -67,16 +67,14 @@
     return node;
   }
 
-  /** The AlphaFonts "A" mark. */
+  /** The AlphaFonts logo: a teal tile, a mist-white open ring and a white "A". */
   function createLogo() {
-    const logo = svg('svg', { viewBox: '0 0 32 32', class: 'af-logo', 'aria-hidden': 'true', focusable: 'false' });
+    const logo = svg('svg', { viewBox: '0 0 512 512', class: 'af-logo', 'aria-hidden': 'true', focusable: 'false' });
     logo.append(
-      svg('rect', { x: 0.5, y: 0.5, width: 31, height: 31, rx: 7, fill: '#0d1117', stroke: '#30363d' }),
-      svg('path', {
-        d: 'M8 24 L16 7.5 L24 24 M11.2 18.8 H20.8',
-        fill: 'none', stroke: '#3dd6b0', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
-      }),
-      svg('path', { d: 'M6 28 H26', fill: 'none', stroke: '#8b949e', 'stroke-width': 1.4, 'stroke-linecap': 'round' })
+      svg('rect', { width: 512, height: 512, rx: 100, fill: '#168575' }),
+      svg('path', { d: 'M464.2 208.6A196 196 0 1 0 464.2 303.4', fill: 'none', stroke: '#e8f3f1', 'stroke-width': 30, 'stroke-linecap': 'round' }),
+      svg('path', { d: 'M148 382L256 120L366 382', fill: 'none', stroke: '#fff', 'stroke-width': 46, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+      svg('path', { d: 'M184 290H328', fill: 'none', stroke: '#fff', 'stroke-width': 46 })
     );
     return logo;
   }
@@ -334,11 +332,11 @@
       style.letterSpacing = data.letterSpacing || 'normal';
       style.lineHeight = '1.3';
       style.textTransform = data.textTransform || 'none';
-      style.color = data.color || '#f0f6fc';
+      style.color = data.color || '#e8f3f1';
       // Pick a backdrop the text color is readable on (dark text -> light backdrop).
       const parsed = utils.parseColor(data.color);
       const darkText = parsed ? utils.luminance(parsed) < 0.4 : false;
-      style.backgroundColor = darkText ? '#f6f8fa' : '#0d1117';
+      style.backgroundColor = darkText ? '#f4f9f8' : '#0b1513';
     }
 
     function renderMore(data, enabled) {

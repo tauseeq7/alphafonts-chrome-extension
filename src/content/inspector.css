@@ -5,28 +5,28 @@
  */
 :host {
   all: initial;
-  --af-bg: #0d1117;
-  --af-bg2: #161b22;
-  --af-border: #30363d;
-  --af-text: #f0f6fc;
-  --af-muted: #8b949e;
-  --af-hover: #1f2630;
-  --af-accent: #3dd6b0;
-  --af-accent-hover: #5ee6c4;
-  --af-accent-text: #3dd6b0;
-  --af-on-accent: #0d1117;
-  --af-shadow: rgba(1, 4, 9, 0.55);
+  --af-bg: #0b1513;
+  --af-bg2: #112320;
+  --af-border: #23403a;
+  --af-text: #e8f3f1;
+  --af-muted: #8daaa3;
+  --af-hover: #183029;
+  --af-accent: #168575;
+  --af-accent-hover: #1c9c89;
+  --af-accent-text: #4fc9b0;
+  --af-on-accent: #ffffff;
+  --af-shadow: rgba(2, 10, 8, 0.6);
 }
 
 :host([data-theme='light']) {
   --af-bg: #ffffff;
-  --af-bg2: #f6f8fa;
-  --af-border: #d0d7de;
-  --af-text: #1f2328;
-  --af-muted: #59636e;
-  --af-hover: #eaeef2;
-  --af-accent-text: #0b7a5e;
-  --af-shadow: rgba(31, 35, 40, 0.25);
+  --af-bg2: #f2f8f7;
+  --af-border: #cfe0dc;
+  --af-text: #0e2420;
+  --af-muted: #4f6e67;
+  --af-hover: #e8f3f1;
+  --af-accent-text: #0f6b5d;
+  --af-shadow: rgba(14, 36, 32, 0.25);
 }
 
 :host,
@@ -47,14 +47,14 @@
   left: 0;
   pointer-events: none;
   border-radius: 3px;
-  background: rgba(61, 214, 176, 0.14);
+  background: rgba(31, 190, 160, 0.16);
   /* Accent outline plus a thin dark ring so it stays visible on light and dark pages. */
-  box-shadow: 0 0 0 2px #3dd6b0, 0 0 0 3px rgba(13, 17, 23, 0.85);
+  box-shadow: 0 0 0 2px #1fbea0, 0 0 0 3px rgba(11, 21, 19, 0.85);
 }
 
 .af-highlight[data-locked='true'] {
-  background: rgba(61, 214, 176, 0.08);
-  box-shadow: 0 0 0 2px #3dd6b0, 0 0 0 3px rgba(13, 17, 23, 0.85), 0 0 0 6px rgba(61, 214, 176, 0.25);
+  background: rgba(31, 190, 160, 0.09);
+  box-shadow: 0 0 0 2px #1fbea0, 0 0 0 3px rgba(11, 21, 19, 0.85), 0 0 0 6px rgba(31, 190, 160, 0.28);
 }
 
 /* ---------- Panel ---------- */
@@ -151,7 +151,7 @@
 }
 
 .af-panel[data-locked='true'] .af-dot {
-  background: var(--af-accent);
+  background: var(--af-accent-text);
 }
 
 .af-section {

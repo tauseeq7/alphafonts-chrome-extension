@@ -2,6 +2,7 @@
 
 | File | Shows |
 | --- | --- |
+| `logo.png` | The AlphaFonts logo |
 | `popup.png` | The popup: property toggles, switches, Remove layers, Options, extension info |
 | `inspector-edit.png` | Edit mode: change values live on the page |
 | `inspector-compact.png` | Compact hover card ("Show all info on hover" off) |

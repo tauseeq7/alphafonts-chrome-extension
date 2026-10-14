@@ -1,22 +1,22 @@
 :root {
-  --bg: #0d1117;
-  --bg-2: #161b22;
-  --border: #30363d;
-  --text: #f0f6fc;
-  --text-2: #8b949e;
-  --accent: #3dd6b0;
-  --accent-text: #3dd6b0;
-  --hover: #1f2630;
+  --bg: #0b1513;
+  --bg-2: #112320;
+  --border: #23403a;
+  --text: #e8f3f1;
+  --text-2: #8daaa3;
+  --accent: #168575;
+  --accent-text: #4fc9b0;
+  --hover: #183029;
 }
 
 :root[data-theme='light'] {
   --bg: #ffffff;
-  --bg-2: #f6f8fa;
-  --border: #d0d7de;
-  --text: #1f2328;
-  --text-2: #59636e;
-  --accent-text: #0b7a5e;
-  --hover: #eaeef2;
+  --bg-2: #f2f8f7;
+  --border: #cfe0dc;
+  --text: #0e2420;
+  --text-2: #4f6e67;
+  --accent-text: #0f6b5d;
+  --hover: #e8f3f1;
 }
 
 * {
@@ -118,7 +118,7 @@ label {
 
 input[type='checkbox'],
 input[type='radio'] {
-  accent-color: #3dd6b0;
+  accent-color: #168575;
 }
 
 .check {

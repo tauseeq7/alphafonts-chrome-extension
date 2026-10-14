@@ -191,8 +191,8 @@ async function runOnTab(tab, type) {
 function setBadge(tabId, on) {
   chrome.action.setBadgeText({ tabId, text: on ? 'ON' : '' }).catch(() => {});
   if (on) {
-    chrome.action.setBadgeBackgroundColor({ tabId, color: '#3DD6B0' }).catch(() => {});
-    if (chrome.action.setBadgeTextColor) chrome.action.setBadgeTextColor({ tabId, color: '#0D1117' }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ tabId, color: '#168575' }).catch(() => {});
+    if (chrome.action.setBadgeTextColor) chrome.action.setBadgeTextColor({ tabId, color: '#FFFFFF' }).catch(() => {});
   }
 }
 

@@ -1,8 +1,10 @@
+<p align="center"><img src="screenshots/logo.png" alt="AlphaFonts logo" width="96"></p>
+
 # AlphaFonts Font Inspector
 
 Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click to lock it, and copy the CSS.
 
-Made by [AlphaFonts](https://alphafonts.com). Version 2.1.0 for Google Chrome (Manifest V3).
+Made by [AlphaFonts](https://alphafonts.com). Version 2.2.0 for Google Chrome (Manifest V3).
 
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
@@ -107,7 +109,12 @@ Permissions used, and why:
 | `contextMenus` | Adds the **AlphaFonts > Inspect Font** right-click item. |
 | `storage` | Saves your settings (theme, chosen properties, switches) on your own computer. Nothing else is stored. |
 
-## What's new in 2.1
+## What's new in 2.2
+
+- New AlphaFonts logo for the toolbar icon, popup, options page and in-page panel.
+- New color scheme taken from the logo: brand teal `#168575` and mist white `#E8F3F1`, in both dark and light themes.
+
+## What was new in 2.1
 
 - Choose which properties to show and copy (11 toggles), plus "Show all info on hover" and a HEX/RGB switch.
 - Edit values live on the page, with Reset and **Remove layers**.
