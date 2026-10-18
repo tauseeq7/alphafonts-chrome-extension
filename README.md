@@ -6,6 +6,13 @@ Inspect fonts, typography, and CSS styles on any webpage. Hover over text, click
 
 Made by [AlphaFonts](https://alphafonts.com). Version 2.5.1 for Google Chrome (Manifest V3).
 
+## Get it
+
+- **Firefox:** [Add to Firefox](https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/)
+- **Microsoft Edge:** [Add to Edge](https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj)
+- **Chrome:** coming soon (in review)
+- **Opera:** coming soon (in review)
+
 ![Popup](screenshots/popup.png)
 ![Inspector panel](screenshots/inspector-locked.png)
 ![Page labels](screenshots/page-labels.png)

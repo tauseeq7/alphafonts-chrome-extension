@@ -39,9 +39,8 @@ PRIVATE AND FREE
 It runs on your computer. No account, no tracking, nothing is collected or sent anywhere.
 
 GET IT
-Firefox: (add your addons.mozilla.org link when approved)
-Opera: (add your addons.opera.com link when approved)
-Microsoft Edge: (add your Edge Add-ons link when approved)
+Firefox: https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/
+Microsoft Edge: https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj
 More font tools: https://alphafonts.com
 
 #fonts #typography #webdesign #css #chromeextension #fontinspector

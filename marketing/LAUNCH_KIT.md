@@ -2,7 +2,9 @@
 
 Replace these placeholders before posting:
 - `[CHROME_URL]` your Chrome Web Store link
-- `[FIREFOX_URL]`, `[EDGE_URL]`, `[OPERA_URL]` the other store links (leave out any that are not approved yet)
+- Firefox (live): https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/
+- Edge (live): https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj
+- `[OPERA_URL]` Opera link (still in review; leave it out until approved)
 - `[VIDEO_URL]` is already https://youtu.be/B7bScxgkS6s
 
 Golden rules (these protect your account and your links):
