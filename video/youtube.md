@@ -1,5 +1,7 @@
 # YouTube upload text: copy and paste
 
+Published main video: https://youtu.be/B7bScxgkS6s
+
 Video file: `alphafonts-font-inspector-demo.mp4` (1280x720, about 70 seconds, no sound).
 Thumbnail: `video/thumbnail.png` (1280x720).
 

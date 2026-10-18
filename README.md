@@ -54,6 +54,8 @@ The AlphaFonts icon now appears in the toolbar. Click the puzzle-piece icon and 
 
 ## Demo video
 
+Watch it on YouTube: https://youtu.be/B7bScxgkS6s
+
 [`video/`](video/) has a 70-second demo video (`alphafonts-font-inspector-demo.mp4`), a thumbnail, the YouTube title/description/tags (`youtube.md`) and an optional voiceover script (`script.md`).
 
 ## Opera, Edge and other Chromium browsers
