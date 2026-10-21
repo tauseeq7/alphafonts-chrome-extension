@@ -1,7 +1,7 @@
 # AlphaFonts Font Inspector: backlink and launch kit
 
 Replace these placeholders before posting:
-- `[CHROME_URL]` your Chrome Web Store link
+- Chrome (live): https://chromewebstore.google.com/detail/dajhgllngjmdpnceaankfkpmgnkaddbl
 - Firefox (live): https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/
 - Edge (live): https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj
 - `[OPERA_URL]` Opera link (still in review; leave it out until approved)
@@ -27,7 +27,7 @@ Golden rules (these protect your account and your links):
 
 ## 2. Product Hunt
 
-Launch only after Chrome is approved and at least one other store is live.
+Chrome is live, so you can launch now.
 
 - **Name:** AlphaFonts Font Inspector
 - **Tagline:** Find any website's font in 1 click (free and private)
@@ -107,7 +107,7 @@ Read each community's rules first. Many only allow self-promotion in a weekly th
 
 **r/chrome_extensions**
 > Title: AlphaFonts Font Inspector: find any website's font in 1 click
-> (Short description + `[CHROME_URL]`. Ask what feature they would add.)
+> (Short description + https://chromewebstore.google.com/detail/dajhgllngjmdpnceaankfkpmgnkaddbl. Ask what feature they would add.)
 
 **r/Frontend, r/css:** use the r/webdev text, shortened. Post on different days.
 

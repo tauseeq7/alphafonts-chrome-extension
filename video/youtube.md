@@ -39,6 +39,7 @@ PRIVATE AND FREE
 It runs on your computer. No account, no tracking, nothing is collected or sent anywhere.
 
 GET IT
+Chrome: https://chromewebstore.google.com/detail/dajhgllngjmdpnceaankfkpmgnkaddbl
 Firefox: https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/
 Microsoft Edge: https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj
 More font tools: https://alphafonts.com
