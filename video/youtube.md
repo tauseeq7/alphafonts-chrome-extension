@@ -104,3 +104,33 @@ One click labels every text on the page with its font, size and weight. Great fo
 Drag a slider and see a new font size, weight or color live on the page. Reload and it is gone. Free and private.
 (same three store links as above)
 #Shorts #css #frontend #webdevelopment #webdesign #designtools
+
+---
+
+## Long video 2: "3 Ways to Find the Font of Any Website" (1:55, 1280x720, voiceover)
+
+Files: `3-ways-to-find-any-website-font.mp4` and `3-ways-thumbnail.png`
+
+**Title:** 3 Ways to Find the Font of ANY Website (Free, 2 Minutes)
+
+**Description:**
+You found a website with a font you love. How do you find out what it is? Here are three ways, and when to use each.
+
+0:00 Intro
+0:07 Way 1: Browser developer tools
+0:33 Way 2: A font inspector extension (AlphaFonts Font Inspector)
+1:11 Way 3: Identify a font from an image
+1:29 Which one should you use?
+1:43 Get it free
+
+The extension is free, needs no account and collects no data.
+Chrome: https://chromewebstore.google.com/detail/dajhgllngjmdpnceaankfkpmgnkaddbl
+Firefox: https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/
+Edge: https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj
+More free font tools: https://alphafonts.com
+
+#fonts #webdesign #typography #css #fontfinder
+
+**Tags:** how to find font of a website, what font is this website using, find website font, font finder, font identifier, css font inspector, inspect element font, font inspector extension, chrome extension, firefox addon, typography, web design tips, alphafonts
+
+**Pinned comment:** Which method do you use to find fonts? Tell me below. Free font tools: https://alphafonts.com
