@@ -75,3 +75,32 @@ Get it: https://alphafonts.com
 Works on Chrome, Firefox, Opera and Edge. No account, no tracking.
 
 #Shorts #webdesign #fonts #typography #chromeextension #webdevelopment
+
+---
+
+## More Shorts (vertical 1080x1920, with voiceover). Also use them as Instagram Reels, Facebook Reels and TikTok videos.
+
+Upload one every 2 to 3 days. Link the install page in the description: https://alphafonts.com/font-inspector-extension/
+
+### 1. `short-contrast-checker-voiceover.mp4` (15 s)
+**Title:** Is your website text hard to read? Fix contrast in 1 click #Shorts
+**Description:**
+Check the WCAG contrast of any text on any website and get a color that passes, in one click. Free, no account.
+Chrome: https://chromewebstore.google.com/detail/dajhgllngjmdpnceaankfkpmgnkaddbl
+Firefox: https://addons.mozilla.org/en-US/firefox/addon/alphafonts-font-inspector/
+Edge: https://microsoftedge.microsoft.com/addons/detail/alphafonts-font-inspector/phemihbipbdjbjdfbmanhbikllpbeblj
+#Shorts #accessibility #a11y #webdesign #wcag #uxdesign
+
+### 2. `short-label-all-text-voiceover.mp4` (17 s)
+**Title:** See every font on a webpage at once #Shorts
+**Description:**
+One click labels every text on the page with its font, size and weight. Great for design audits. Free and private.
+(same three store links as above)
+#Shorts #typography #webdesign #fonts #uidesign #css
+
+### 3. `short-live-edit-voiceover.mp4` (16 s)
+**Title:** Test a new font size on any website without code #Shorts
+**Description:**
+Drag a slider and see a new font size, weight or color live on the page. Reload and it is gone. Free and private.
+(same three store links as above)
+#Shorts #css #frontend #webdevelopment #webdesign #designtools
